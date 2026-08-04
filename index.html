@@ -10,16 +10,16 @@
     <!-- Firebase SDK v9 (Modular via CDN) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-        // ⚠️ THAY THẾ BẰNG CẤU HÌNH FIREBASE CỦA BẠN
+        // CẤU HÌNH FIREBASE THỰC TẾ
         const firebaseConfig = {
             apiKey: "AIzaSyBWhqoCmf75jljLewbh6h-4aQEBPIydgYE",
-  authDomain: "pda-management.firebaseapp.com",
-  projectId: "pda-management",
-  storageBucket: "pda-management.firebasestorage.app",
-  messagingSenderId: "446564457921",
-  appId: "1:446564457921:web:41ad9f5344b530fd2fa340"
+            authDomain: "pda-management.firebaseapp.com",
+            projectId: "pda-management",
+            storageBucket: "pda-management.firebasestorage.app",
+            messagingSenderId: "446564457921",
+            appId: "1:446564457921:web:41ad9f5344b530fd2fa340"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -27,7 +27,7 @@
 
         // Biến toàn cục
         window.db = db;
-        window.fs = { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, query, where, serverTimestamp };
+        window.fs = { collection, onSnapshot, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, getDocs, serverTimestamp };
     </script>
 
     <style>
@@ -161,7 +161,7 @@
                 </div>
             </div>
 
-            <!-- TAB 2: UNRETURNED LIST (ĐỒNG BỘ THEO MẪU BẢNG GOOGLE SHEETS) -->
+            <!-- TAB 2: UNRETURNED LIST -->
             <div id="tab-unreturned" class="tab-content hidden bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-sm font-bold text-gray-800 uppercase">Unreturned List (Danh Sách PDA Chưa Trả)</h2>
@@ -280,7 +280,7 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC XỬ LÝ TAP & FIREBASE -->
+    <!-- JAVASCRIPT LOGIC XỬ LÝ TAB & FIREBASE REALTIME -->
     <script type="module">
         // Chuyển tab Sidebar
         window.switchTab = function(tabName) {
@@ -388,7 +388,7 @@
                     <td class="p-2 font-semibold">${emp.team}</td>
                     <td class="p-2">${emp.supervisor}</td>
                     <td class="p-2 text-center">
-                        <button onclick="editEmployee('${emp.opsId}', '${emp.empName}', '${emp.email}', '${emp.team}', '${emp.supervisor}')" class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold mr-1">Sửa</button>
+                        <button onclick="editEmployee('${emp.opsId}', '${emp.empName}', '${emp.email || ''}', '${emp.team}', '${emp.supervisor}')" class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold mr-1">Sửa</button>
                     </td>
                 </tr>
             `).join('');
@@ -421,6 +421,195 @@
             document.getElementById('empTeam').value = team;
             document.getElementById('empSup').value = sup;
         };
+
+        // ==========================================
+        // LOGIC XỬ LÝ MƯỢN / TRẢ PDA & QUÉT MÃ BARCODE
+        // ==========================================
+
+        let selectedEmployee = null;
+
+        // 1. Tự động tìm thông tin nhân viên khi quét hoặc nhập Ops ID
+        const scanEmpInput = document.getElementById('scanEmpInput');
+        if (scanEmpInput) {
+            scanEmpInput.addEventListener('keypress', async function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const opsId = this.value.trim();
+                    if (!opsId) return;
+
+                    const { collection, query, where, getDocs } = window.fs;
+                    const db = window.db;
+
+                    const q = query(collection(db, "employees"), where("opsId", "==", opsId));
+                    const querySnapshot = await getDocs(q);
+
+                    const empBox = document.getElementById('selectedEmpBox');
+
+                    if (!querySnapshot.empty) {
+                        const empData = querySnapshot.docs[0].data();
+                        selectedEmployee = empData;
+
+                        empBox.innerHTML = `
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-bold text-gray-800 text-sm">${empData.empName}</p>
+                                    <p class="text-gray-500 font-mono">Mã NV: <span class="text-orange-600 font-bold">${empData.opsId}</span></p>
+                                    <p class="text-gray-500">Team: <span class="font-semibold text-gray-700">${empData.team}</span> | Sup: <span class="font-semibold text-gray-700">${empData.supervisor}</span></p>
+                                </div>
+                                <span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded text-[10px]">Sẵn sàng</span>
+                            </div>
+                        `;
+                        document.getElementById('borrowPdaInput').focus();
+                    } else {
+                        selectedEmployee = null;
+                        empBox.innerHTML = `
+                            <div class="text-red-500 font-bold">
+                                ⚠️ Không tìm thấy Ops ID "${opsId}". Vui lòng thêm nhân viên này ở thẻ "Quản Lý Nhân Viên" trước!
+                            </div>
+                        `;
+                    }
+                }
+            });
+        }
+
+        // 2. Thao tác XÁC NHẬN MƯỢN / TRẢ PDA
+        window.processTransaction = async function() {
+            const borrowInput = document.getElementById('borrowPdaInput');
+            const returnInput = document.getElementById('returnPdaInput');
+
+            const borrowPda = borrowInput.value.trim();
+            const returnPda = returnInput.value.trim();
+
+            const { collection, addDoc, query, where, getDocs, deleteDoc, doc } = window.fs;
+            const db = window.db;
+            const now = new Date().toLocaleString('vi-VN');
+            const adminName = "HÀ VIỆT HÙNG";
+
+            // --- THAO TÁC 1: XỬ LÝ MƯỢN PDA ---
+            if (borrowPda) {
+                if (!selectedEmployee) {
+                    alert("⚠️ Vui lòng quét Ops ID nhân viên hợp lệ trước khi cấp mượn PDA!");
+                    return;
+                }
+
+                const qCheck = query(collection(db, "unreturned"), where("pdaCode", "==", borrowPda));
+                const snapCheck = await getDocs(qCheck);
+                if (!snapCheck.empty) {
+                    alert(`❌ Máy PDA ${borrowPda} đang ở trạng thái CHƯA TRẢ! Không thể cho mượn tiếp.`);
+                    return;
+                }
+
+                const pdaType = borrowPda.toUpperCase().includes('MT90') ? 'MT90 (Máy cũ)' : 'MT93 (Máy mới)';
+
+                await addDoc(collection(db, "unreturned"), {
+                    pdaCode: borrowPda,
+                    pdaType: pdaType,
+                    opsId: selectedEmployee.opsId,
+                    empName: selectedEmployee.empName,
+                    team: selectedEmployee.team,
+                    supervisor: selectedEmployee.supervisor,
+                    borrowTime: now,
+                    adminName: adminName
+                });
+
+                await addDoc(collection(db, "logs"), {
+                    timestamp: now,
+                    pdaCode: borrowPda,
+                    status: "MƯỢN",
+                    opsId: selectedEmployee.opsId,
+                    empName: selectedEmployee.empName,
+                    team: selectedEmployee.team,
+                    supervisor: selectedEmployee.supervisor,
+                    adminName: adminName
+                });
+
+                alert(`✅ Đã cấp PDA ${borrowPda} cho nhân viên ${selectedEmployee.empName} thành công!`);
+            }
+
+            // --- THAO TÁC 2: XỬ LÝ TRẢ PDA ---
+            if (returnPda) {
+                const q = query(collection(db, "unreturned"), where("pdaCode", "==", returnPda));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    alert(`⚠️ Không tìm thấy mã PDA ${returnPda} trong danh sách mượn (hoặc đã được trả trước đó)!`);
+                } else {
+                    const docData = snapshot.docs[0].data();
+                    const docId = snapshot.docs[0].id;
+
+                    await deleteDoc(doc(db, "unreturned", docId));
+
+                    await addDoc(collection(db, "logs"), {
+                        timestamp: now,
+                        pdaCode: returnPda,
+                        status: "TRẢ",
+                        opsId: docData.opsId,
+                        empName: docData.empName,
+                        team: docData.team,
+                        supervisor: docData.supervisor,
+                        adminName: adminName
+                    });
+
+                    alert(`✅ Đã thu hồi PDA ${returnPda} từ NV ${docData.empName}!`);
+                }
+            }
+
+            // Reset Form
+            borrowInput.value = '';
+            returnInput.value = '';
+            scanEmpInput.value = '';
+            selectedEmployee = null;
+            document.getElementById('selectedEmpBox').innerHTML = `<p class="text-gray-400">Chưa quét thông tin nhân viên</p>`;
+        };
+
+        // 3. Nút Nhận Trả trực tiếp trên danh sách bảng Unreturned
+        window.returnPdaDirect = async function(docId, pdaCode) {
+            if (!confirm(`Xác nhận thu hồi thiết bị PDA [${pdaCode}]?`)) return;
+
+            const { collection, addDoc, doc, deleteDoc, getDoc } = window.fs;
+            const db = window.db;
+            const now = new Date().toLocaleString('vi-VN');
+
+            try {
+                const unreturnedRef = doc(db, "unreturned", docId);
+                const docSnap = await getDoc(unreturnedRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+
+                    await deleteDoc(unreturnedRef);
+
+                    await addDoc(collection(db, "logs"), {
+                        timestamp: now,
+                        pdaCode: pdaCode,
+                        status: "TRẢ",
+                        opsId: data.opsId,
+                        empName: data.empName,
+                        team: data.team,
+                        supervisor: data.supervisor,
+                        adminName: "HÀ VIỆT HÙNG"
+                    });
+
+                    alert(`✅ Đã thu hồi thành công PDA ${pdaCode}!`);
+                }
+            } catch (err) {
+                console.error("Lỗi khi trả máy: ", err);
+                alert("❌ Có lỗi xảy ra, vui lòng thử lại!");
+            }
+        };
+
+        // 4. Tìm kiếm Realtime trên bảng Unreturned List
+        const searchUnreturned = document.getElementById('searchUnreturned');
+        if (searchUnreturned) {
+            searchUnreturned.addEventListener('keyup', function() {
+                const keyword = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#unreturnedFullTable tr');
+                rows.forEach(row => {
+                    const text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(keyword) ? '' : 'none';
+                });
+            });
+        }
     </script>
 </body>
 </html>
