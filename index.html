@@ -278,19 +278,34 @@
                     </form>
                 </div>
 
-                <!-- Bảng danh sách nhân viên + Thanh tìm kiếm -->
+                <!-- Bảng danh sách nhân viên + Thanh tìm kiếm + Các nút xóa -->
                 <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-                    <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-base font-bold text-gray-800 uppercase">Danh Sách Nhân Viên (<span id="empCount">0</span>)</h2>
+                    <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-base font-bold text-gray-800 uppercase">Danh Sách Nhân Viên (<span id="empCount">0</span>)</h2>
+                            
+                            <!-- Thao tác xóa hàng loạt / tất cả -->
+                            <button onclick="deleteSelectedEmployees()" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5">
+                                <i class="fa-solid fa-trash-can"></i> Xóa Các Mục Đã Chọn
+                            </button>
+                            <button onclick="deleteAllEmployees()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Xóa Tất Cả CSDL
+                            </button>
+                        </div>
+
                         <div class="relative">
                             <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
                             <input type="text" id="searchEmp" placeholder="Tìm theo Tên, Ops ID, Team..." class="pl-9 p-2 border border-gray-300 focus:border-orange-500 outline-none rounded-lg w-80 text-sm shadow-sm">
                         </div>
                     </div>
+
                     <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
                         <table class="w-full text-left relative">
                             <thead class="bg-gray-100 text-gray-600 sticky top-0 shadow-sm z-10">
                                 <tr>
+                                    <th class="p-3 text-center w-10">
+                                        <input type="checkbox" id="selectAllEmp" onclick="toggleSelectAllEmployees(this)" class="w-4 h-4 rounded cursor-pointer accent-orange-600">
+                                    </th>
                                     <th class="p-3">Ops ID</th>
                                     <th class="p-3">Họ Tên</th>
                                     <th class="p-3">Email</th>
@@ -312,7 +327,7 @@
     <script type="module">
         let selectedEmployee = null;
         let pendingBorrowPdaList = [];
-        let pendingReturnPdaList = []; // Mảng chứa object { code, originalData }
+        let pendingReturnPdaList = [];
         let employeeCache = [];
         let unreturnedCache = [];
 
@@ -434,7 +449,6 @@
                     const code = returnPdaInput.value.trim();
                     if (!code) return;
 
-                    // Kiểm tra xem máy có trong danh sách Unreturned không
                     const activeRecord = unreturnedCache.find(item => item.pdaCode.toLowerCase() === code.toLowerCase());
 
                     if (!activeRecord) {
@@ -476,7 +490,6 @@
             });
 
             pendingReturnPdaList.forEach((item, index) => {
-                // Kiểm tra xem có trả hộ không
                 let extraInfo = `(Đang mượn bởi: ${item.originalData.empName} - ${item.originalData.opsId})`;
                 if (selectedEmployee && selectedEmployee.opsId.toLowerCase() !== item.originalData.opsId.toLowerCase()) {
                     extraInfo = `<span class="text-red-600 font-bold">[TRẢ HỘ]</span> bởi ${selectedEmployee.empName} ➔ cho ${item.originalData.empName}`;
@@ -508,7 +521,7 @@
             renderPendingList();
         };
 
-        // 4. XỬ LÝ LƯU BATCH MƯỢN / TRẢ (BAO GỒM LOG TRẢ HỘ)
+        // 4. XỬ LÝ LƯU BATCH MƯỢN / TRẢ
         window.processBatchTransaction = async function() {
             if (pendingBorrowPdaList.length === 0 && pendingReturnPdaList.length === 0) {
                 alert("⚠️ Hãy quét ít nhất 1 mã PDA để cấp mượn hoặc thu hồi!");
@@ -520,7 +533,6 @@
             const now = new Date().toLocaleString('vi-VN');
             const adminName = "HÀ VIỆT HÙNG";
 
-            // XỬ LÝ MƯỢN MÁY
             if (pendingBorrowPdaList.length > 0) {
                 if (!selectedEmployee) {
                     alert("⚠️ Vui lòng quét Ops ID nhân viên mượn máy trước!");
@@ -560,7 +572,6 @@
                 }
             }
 
-            // XỬ LÝ TRẢ MÁY (Xử lý chi tiết Trả Hộ)
             if (pendingReturnPdaList.length > 0) {
                 for (const item of pendingReturnPdaList) {
                     const returnPda = item.code;
@@ -577,7 +588,6 @@
                         let logEmpName = orig.empName;
                         let logDetails = "Trả máy chính chủ";
 
-                        // Nếu có quét NV ở ô 1 VÀ khác với người mượn ban đầu -> Ghi nhận Trả Hộ
                         if (selectedEmployee && selectedEmployee.opsId.toLowerCase() !== orig.opsId.toLowerCase()) {
                             logOpsId = selectedEmployee.opsId;
                             logEmpName = selectedEmployee.empName;
@@ -661,19 +671,126 @@
         function renderEmployees(emps) {
             document.getElementById('empCount').innerText = emps.length;
             const tbody = document.getElementById('employeesTable');
+            const selectAllBox = document.getElementById('selectAllEmp');
+            if(selectAllBox) selectAllBox.checked = false;
+
             tbody.innerHTML = emps.map(emp => `
                 <tr class="hover:bg-gray-50 border-b border-gray-100">
+                    <td class="p-3 text-center">
+                        <input type="checkbox" value="${emp.id}" class="emp-checkbox w-4 h-4 rounded cursor-pointer accent-orange-600">
+                    </td>
                     <td class="p-3 font-mono font-bold text-orange-600">${emp.opsId}</td>
                     <td class="p-3 font-bold">${emp.empName}</td>
                     <td class="p-3 text-gray-500 font-mono text-xs">${emp.email || 'N/A'}</td>
                     <td class="p-3 font-semibold">${emp.team || 'N/A'}</td>
                     <td class="p-3">${emp.supervisor || 'N/A'}</td>
                     <td class="p-3 text-center">
-                        <button onclick="editEmployee('${emp.opsId}', '${emp.empName}', '${emp.email || ''}', '${emp.team || ''}', '${emp.supervisor || ''}')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-1.5 rounded font-bold text-xs mr-1 transition-all">Sửa</button>
+                        <button onclick="editEmployee('${emp.opsId}', '${emp.empName}', '${emp.email || ''}', '${emp.team || ''}', '${emp.supervisor || ''}')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded font-bold text-xs mr-1 transition-all">Sửa</button>
+                        <button onclick="deleteSingleEmployee('${emp.id}', '${emp.empName}')" class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1 rounded font-bold text-xs transition-all">Xóa</button>
                     </td>
                 </tr>
             `).join('');
         }
+
+        // Chọn tất cả nhân viên
+        window.toggleSelectAllEmployees = function(master) {
+            const checkboxes = document.querySelectorAll('.emp-checkbox');
+            checkboxes.forEach(cb => {
+                if (cb.closest('tr').style.display !== 'none') {
+                    cb.checked = master.checked;
+                }
+            });
+        };
+
+        // --- CÁC TÍNH NĂNG XÓA NHÂN VIÊN ---
+        
+        // 1. Xóa 1 nhân viên
+        window.deleteSingleEmployee = async function(id, name) {
+            if (!confirm(`Bạn có chắc chắn muốn xóa nhân viên "${name}" khỏi hệ thống?`)) return;
+
+            const { doc, deleteDoc } = window.fs;
+            const db = window.db;
+
+            try {
+                await deleteDoc(doc(db, "employees", id));
+                alert(`✅ Đã xóa nhân viên "${name}"!`);
+            } catch (err) {
+                console.error(err);
+                alert("❌ Có lỗi xảy ra khi xóa nhân viên!");
+            }
+        };
+
+        // 2. Xóa các nhân viên đã chọn qua Checkbox
+        window.deleteSelectedEmployees = async function() {
+            const selectedCheckboxes = document.querySelectorAll('.emp-checkbox:checked');
+            if (selectedCheckboxes.length === 0) {
+                alert("⚠️ Vui lòng tích chọn ít nhất 1 nhân viên để xóa!");
+                return;
+            }
+
+            if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedCheckboxes.length} nhân viên đã chọn?`)) return;
+
+            const { collection, writeBatch, doc } = window.fs;
+            const db = window.db;
+            const batch = writeBatch(db);
+
+            selectedCheckboxes.forEach(cb => {
+                batch.delete(doc(db, "employees", cb.value));
+            });
+
+            try {
+                await batch.commit();
+                alert(`✅ Đã xóa thành công ${selectedCheckboxes.length} nhân viên đã chọn!`);
+            } catch (err) {
+                console.error(err);
+                alert("❌ Có lỗi xảy ra khi xóa danh sách đã chọn!");
+            }
+        };
+
+        // 3. Xóa TOÀN BỘ CSDL nhân viên
+        window.deleteAllEmployees = async function() {
+            if (employeeCache.length === 0) {
+                alert("⚠️ CSDL Nhân viên hiện đang trống!");
+                return;
+            }
+
+            const confirm1 = confirm(`🚨 CẢNH BÁO CỰC KỲ QUAN TRỌNG!\n\nBạn có chắc chắn muốn XÓA TOÀN BỘ ${employeeCache.length} nhân viên trong CSDL? Thao tác này không thể hoàn tác!`);
+            if (!confirm1) return;
+
+            const confirm2 = prompt(`Vui lòng nhập từ "DELETE" để xác nhận xóa toàn bộ danh sách nhân viên:`);
+            if (confirm2 !== "DELETE") {
+                alert("❌ Mã xác nhận không đúng. Đã hủy thao tác xóa!");
+                return;
+            }
+
+            const { collection, writeBatch, doc } = window.fs;
+            const db = window.db;
+
+            try {
+                // Firebase cho phép xóa tối đa 500 docs/batch
+                let batch = writeBatch(db);
+                let count = 0;
+
+                for (const emp of employeeCache) {
+                    batch.delete(doc(db, "employees", emp.id));
+                    count++;
+
+                    if (count % 400 === 0) {
+                        await batch.commit();
+                        batch = writeBatch(db);
+                    }
+                }
+
+                if (count % 400 !== 0) {
+                    await batch.commit();
+                }
+
+                alert("✅ Đã xóa sạch toàn bộ danh sách nhân viên khỏi cơ sở dữ liệu!");
+            } catch (err) {
+                console.error(err);
+                alert("❌ Có lỗi xảy ra khi xóa toàn bộ dữ liệu nhân viên!");
+            }
+        };
 
         // Đẩy data từ bảng lên Form để Sửa
         window.editEmployee = function(opsId, name, email, team, sup) {
@@ -687,10 +804,10 @@
             document.getElementById('empTeam').focus();
         };
 
-        // --- CẬP NHẬT / THÊM MỚI NHÂN VIÊN ---
+        // CẬP NHẬT / THÊM MỚI NHÂN VIÊN
         window.saveEmployee = async function(e) {
             e.preventDefault();
-            const { collection, addDoc, query, where, getDocs, updateDoc, doc } = window.fs;
+            const { collection, addDoc, query, where, getDocs, updateDoc } = window.fs;
             const db = window.db;
 
             const opsId = document.getElementById('empOpsId').value.trim();
@@ -706,7 +823,7 @@
                 if (!querySnapshot.empty) {
                     const docId = querySnapshot.docs[0].id;
                     await updateDoc(doc(db, "employees", docId), { empName, email, team, supervisor });
-                    alert(`✅ Đã cập nhật thành công Team/Sup cho nhân viên [${opsId}]!`);
+                    alert(`✅ Đã cập nhật thành công thông tin cho [${opsId}]!`);
                 } else {
                     await addDoc(collection(db, "employees"), { opsId, empName, email, team, supervisor });
                     alert(`✅ Đã thêm nhân viên mới [${opsId}] thành công!`);
@@ -719,14 +836,14 @@
             }
         };
 
-        // --- IMPORT EXCEL ---
+        // IMPORT EXCEL
         async function saveBatchEmployees(dataArray) {
             const { collection, writeBatch, doc } = window.fs;
             const db = window.db;
-            const batch = writeBatch(db);
+            let batch = writeBatch(db);
 
             let count = 0;
-            dataArray.forEach(item => {
+            for (const item of dataArray) {
                 if (item.opsId && item.empName) {
                     const docRef = doc(collection(db, "employees"));
                     batch.set(docRef, {
@@ -737,11 +854,19 @@
                         supervisor: String(item.supervisor || '').trim()
                     });
                     count++;
+
+                    if (count % 400 === 0) {
+                        await batch.commit();
+                        batch = writeBatch(db);
+                    }
                 }
-            });
+            }
+
+            if (count % 400 !== 0) {
+                await batch.commit();
+            }
 
             if (count > 0) {
-                await batch.commit();
                 alert(`✅ Đã tải thành công ${count} nhân viên từ file vào hệ thống!`);
             }
         }
