@@ -64,6 +64,9 @@
                 <button onclick="switchTab('unreturned')" id="nav-unreturned" class="w-full flex items-center gap-3 px-3 py-3 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all">
                     <i class="fa-solid fa-clock-rotate-left text-base w-5 text-amber-400"></i> Unreturned List
                 </button>
+                <button onclick="switchTab('pivot')" id="nav-pivot" class="w-full flex items-center gap-3 px-3 py-3 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-chart-pie text-base w-5 text-purple-400"></i> Pivot Theo Sup
+                </button>
                 <button onclick="switchTab('logs')" id="nav-logs" class="w-full flex items-center gap-3 px-3 py-3 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all">
                     <i class="fa-solid fa-list-check text-base w-5 text-blue-400"></i> Logs Nhật Ký
                 </button>
@@ -204,6 +207,27 @@
                 </div>
             </div>
 
+            <!-- TAB PIVOT TABLE THEO SUPERVISOR (MỚI) -->
+            <div id="tab-pivot" class="tab-content hidden space-y-4">
+                <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                    <div class="flex justify-between items-center mb-4 border-b pb-3">
+                        <div>
+                            <h2 class="text-base font-bold text-gray-800 uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-purple-600"></i> Bảng Pivot Thống Kê Theo Supervisor
+                            </h2>
+                            <p class="text-xs text-gray-500 mt-0.5">Nhấp vào tên nhân viên để xem chi tiết danh sách máy đang giữ</p>
+                        </div>
+                        <div class="bg-purple-50 text-purple-700 font-bold px-3 py-1.5 rounded-lg border border-purple-200 text-xs">
+                            Tổng PDA Chưa Trả: <span id="pivotTotalPdas" class="text-purple-900 text-sm">0</span>
+                        </div>
+                    </div>
+
+                    <div id="pivotContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Nơi đổ dữ liệu Pivot Table -->
+                    </div>
+                </div>
+            </div>
+
             <!-- TAB 3: LOGS NHẬT KÝ -->
             <div id="tab-logs" class="tab-content hidden bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                 <h2 class="text-base font-bold text-gray-800 uppercase mb-4">Logs Nhật Ký Mượn / Trả</h2>
@@ -283,8 +307,6 @@
                     <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
                         <div class="flex items-center gap-3">
                             <h2 class="text-base font-bold text-gray-800 uppercase">Danh Sách Nhân Viên (<span id="empCount">0</span>)</h2>
-                            
-                            <!-- Thao tác xóa hàng loạt / tất cả -->
                             <button onclick="deleteSelectedEmployees()" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5">
                                 <i class="fa-solid fa-trash-can"></i> Xóa Các Mục Đã Chọn
                             </button>
@@ -323,6 +345,30 @@
         </div>
     </div>
 
+    <!-- MODAL POPUP: CHI TIẾT CÁC MÁY MÀ NHÂN VIÊN ĐANG MƯỢN -->
+    <div id="empDetailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-200">
+            <div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center">
+                <div>
+                    <h3 id="modalEmpName" class="font-bold text-base">Chi Tiết Máy Đang Mượn</h3>
+                    <p id="modalEmpSub" class="text-xs text-slate-400">Ops ID: - | Team: -</p>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl font-bold">✕</button>
+            </div>
+            <div class="p-5 space-y-3">
+                <p class="text-xs font-bold text-gray-500 uppercase">Danh sách các thiết bị PDA chưa trả:</p>
+                <div id="modalPdaList" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    <!-- Danh sách PDA chi tiết sẽ đổ vào đây -->
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3 border-t text-right">
+                <button onclick="closeModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-xs">
+                    Đóng Bảng
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT LOGIC XỬ LÝ -->
     <script type="module">
         let selectedEmployee = null;
@@ -354,6 +400,7 @@
                 unreturnedCache = [];
                 snapshot.forEach(doc => unreturnedCache.push({ id: doc.id, ...doc.data() }));
                 renderUnreturned(unreturnedCache);
+                renderPivotTable(unreturnedCache);
             });
 
             onSnapshot(collection(db, "logs"), (snapshot) => {
@@ -440,7 +487,7 @@
             });
         }
 
-        // 3. TRẢ MÁY - TỰ ĐỘNG HIỂN THỊ THÔNG TIN NGƯỜI ĐANG GIỮ MÁY KHÔNG CẦN SCAN NV
+        // 3. TRẢ MÁY
         const returnPdaInput = document.getElementById('returnPdaInput');
         if (returnPdaInput) {
             returnPdaInput.addEventListener('keypress', async (e) => {
@@ -618,7 +665,122 @@
             scanEmpInput.focus();
         };
 
-        // --- RENDER TABLES ---
+        // --- PIVOT TABLE THEO SUPERVISOR ---
+        function renderPivotTable(unreturnedList) {
+            const container = document.getElementById('pivotContainer');
+            document.getElementById('pivotTotalPdas').innerText = unreturnedList.length;
+
+            if (unreturnedList.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-400">
+                        <i class="fa-solid fa-box-open text-4xl mb-2"></i>
+                        <p class="font-bold">Hiện không có máy PDA nào chưa trả!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group data theo Supervisor -> Nhân viên
+            const pivotData = {};
+
+            unreturnedList.forEach(item => {
+                const sup = item.supervisor || 'Chưa phân công Sup';
+                const opsId = item.opsId;
+
+                if (!pivotData[sup]) pivotData[sup] = {};
+                if (!pivotData[sup][opsId]) {
+                    pivotData[sup][opsId] = {
+                        empName: item.empName,
+                        opsId: item.opsId,
+                        team: item.team,
+                        items: []
+                    };
+                }
+                pivotData[sup][opsId].items.push(item);
+            });
+
+            let html = '';
+            for (const [supName, employees] of Object.entries(pivotData)) {
+                let supTotalPda = 0;
+                let empRows = '';
+
+                for (const [opsId, emp] of Object.entries(employees)) {
+                    const count = emp.items.length;
+                    supTotalPda += count;
+
+                    empRows += `
+                        <tr onclick="openEmpDetailsModal('${opsId}')" class="hover:bg-purple-50/60 cursor-pointer transition-all border-b border-gray-100">
+                            <td class="p-2.5">
+                                <div class="font-bold text-gray-800">${emp.empName}</div>
+                                <div class="text-[11px] font-mono text-gray-400">${emp.opsId}</div>
+                            </td>
+                            <td class="p-2.5 text-right font-bold">
+                                <span class="bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full text-xs hover:bg-purple-200">${count} máy</span>
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                html += `
+                    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+                        <div class="bg-gradient-to-r from-slate-800 to-slate-900 text-white px-4 py-3 flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-user-tie text-orange-400"></i>
+                                <span class="font-bold text-sm">${supName}</span>
+                            </div>
+                            <span class="bg-orange-500 text-white font-extrabold px-2.5 py-0.5 rounded-full text-xs">${supTotalPda} PDA</span>
+                        </div>
+                        <div class="p-2">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="text-[11px] text-gray-400 uppercase font-bold border-b">
+                                    <tr>
+                                        <th class="p-2">Nhân viên</th>
+                                        <th class="p-2 text-right">Số lượng</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${empRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // POPUP CHI TIẾT KHI BẤM VÀO NHÂN VIÊN TRONG PIVOT TABLE
+        window.openEmpDetailsModal = function(opsId) {
+            const empItems = unreturnedCache.filter(item => item.opsId.toLowerCase() === opsId.toLowerCase());
+            if (empItems.length === 0) return;
+
+            const sample = empItems[0];
+            document.getElementById('modalEmpName').innerText = sample.empName;
+            document.getElementById('modalEmpSub').innerText = `Ops ID: ${sample.opsId} | Team: ${sample.team || 'N/A'} | Sup: ${sample.supervisor || 'N/A'}`;
+
+            const listContainer = document.getElementById('modalPdaList');
+            listContainer.innerHTML = empItems.map(item => `
+                <div class="bg-orange-50/50 border border-orange-200 rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                        <span class="font-mono font-extrabold text-orange-600 text-sm">${item.pdaCode}</span>
+                        <span class="bg-gray-200 text-gray-700 font-bold px-1.5 py-0.5 rounded text-[10px] ml-2">${item.pdaType || 'MT93'}</span>
+                        <p class="text-[11px] text-gray-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>Mượn lúc: ${item.borrowTime}</p>
+                    </div>
+                    <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow transition-all">
+                        Nhận Trả
+                    </button>
+                </div>
+            `).join('');
+
+            document.getElementById('empDetailsModal').classList.remove('hidden');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('empDetailsModal').classList.add('hidden');
+        };
+
+        // --- RENDER TABLES KHÁC ---
         function renderUnreturned(list) {
             const fullTbody = document.getElementById('unreturnedFullTable');
             const miniTbody = document.getElementById('unreturnedMiniTable');
@@ -692,7 +854,6 @@
             `).join('');
         }
 
-        // Chọn tất cả nhân viên
         window.toggleSelectAllEmployees = function(master) {
             const checkboxes = document.querySelectorAll('.emp-checkbox');
             checkboxes.forEach(cb => {
@@ -702,9 +863,6 @@
             });
         };
 
-        // --- CÁC TÍNH NĂNG XÓA NHÂN VIÊN ---
-        
-        // 1. Xóa 1 nhân viên
         window.deleteSingleEmployee = async function(id, name) {
             if (!confirm(`Bạn có chắc chắn muốn xóa nhân viên "${name}" khỏi hệ thống?`)) return;
 
@@ -720,7 +878,6 @@
             }
         };
 
-        // 2. Xóa các nhân viên đã chọn qua Checkbox
         window.deleteSelectedEmployees = async function() {
             const selectedCheckboxes = document.querySelectorAll('.emp-checkbox:checked');
             if (selectedCheckboxes.length === 0) {
@@ -747,7 +904,6 @@
             }
         };
 
-        // 3. Xóa TOÀN BỘ CSDL nhân viên
         window.deleteAllEmployees = async function() {
             if (employeeCache.length === 0) {
                 alert("⚠️ CSDL Nhân viên hiện đang trống!");
@@ -767,7 +923,6 @@
             const db = window.db;
 
             try {
-                // Firebase cho phép xóa tối đa 500 docs/batch
                 let batch = writeBatch(db);
                 let count = 0;
 
@@ -792,7 +947,6 @@
             }
         };
 
-        // Đẩy data từ bảng lên Form để Sửa
         window.editEmployee = function(opsId, name, email, team, sup) {
             document.getElementById('empOpsId').value = opsId;
             document.getElementById('empName').value = name;
@@ -804,7 +958,6 @@
             document.getElementById('empTeam').focus();
         };
 
-        // CẬP NHẬT / THÊM MỚI NHÂN VIÊN
         window.saveEmployee = async function(e) {
             e.preventDefault();
             const { collection, addDoc, query, where, getDocs, updateDoc } = window.fs;
@@ -836,7 +989,6 @@
             }
         };
 
-        // IMPORT EXCEL
         async function saveBatchEmployees(dataArray) {
             const { collection, writeBatch, doc } = window.fs;
             const db = window.db;
@@ -929,11 +1081,11 @@
                     adminName: "HÀ VIỆT HÙNG"
                 });
 
+                closeModal();
                 alert(`✅ Đã thu hồi PDA ${pdaCode}!`);
             }
         };
 
-        // Tìm kiếm nhân viên
         const searchEmp = document.getElementById('searchEmp');
         if (searchEmp) {
             searchEmp.addEventListener('input', function() {
@@ -944,7 +1096,6 @@
             });
         }
 
-        // Tìm kiếm Unreturned
         const searchUnreturned = document.getElementById('searchUnreturned');
         if (searchUnreturned) {
             searchUnreturned.addEventListener('keyup', function() {
