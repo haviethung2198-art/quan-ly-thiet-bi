@@ -120,9 +120,12 @@
 
                     <!-- OPS ID & Auto-Fill -->
                     <div class="col-span-12 lg:col-span-4 bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-3">
-                        <div class="flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">1</span><h2 class="font-bold uppercase">OPS ID Nhân Viên</h2></div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">1</span>
+                            <h2 class="font-bold uppercase">OPS ID Nhân Viên (Mượn / Trả Hộ)</h2>
+                        </div>
                         <div class="flex gap-2">
-                            <input type="text" id="scanEmpInput" autofocus placeholder="Quét mã NV (Tự động nhận diện)..." class="flex-1 p-2.5 border border-gray-300 rounded-lg focus:border-orange-500 outline-none text-sm font-semibold">
+                            <input type="text" id="scanEmpInput" autofocus placeholder="Quét mã NV (Mượn máy hoặc Trả hộ)..." class="flex-1 p-2.5 border border-gray-300 rounded-lg focus:border-orange-500 outline-none text-sm font-semibold">
                         </div>
                         <div id="selectedEmpBox" class="border border-orange-200 rounded-lg p-3 bg-orange-50/30">
                             <p class="text-gray-400">Chưa quét thông tin nhân viên</p>
@@ -144,13 +147,13 @@
                             </div>
                         </div>
 
-                        <!-- Danh sách thiết bị chờ cấp mượn -->
+                        <!-- Danh sách thiết bị chờ cấp mượn / trả -->
                         <div>
                             <div class="flex justify-between items-center text-xs font-bold text-gray-600 mb-1">
                                 <span>Danh sách PDA vừa quét (<span id="pendingCount">0</span>):</span>
                                 <button onclick="clearPendingList()" class="text-red-500 hover:underline">Xóa tất cả</button>
                             </div>
-                            <div id="pendingPdaList" class="flex flex-wrap gap-1.5 min-h-[40px] max-h-[70px] overflow-y-auto p-2 border rounded-lg bg-gray-50">
+                            <div id="pendingPdaList" class="flex flex-col gap-1.5 min-h-[40px] max-h-[100px] overflow-y-auto p-2 border rounded-lg bg-gray-50">
                                 <span class="text-gray-400 text-xs italic">Chưa quét mã PDA nào...</span>
                             </div>
                         </div>
@@ -211,11 +214,10 @@
                                 <th class="p-3">Timestamp</th>
                                 <th class="p-3">Mã PDA</th>
                                 <th class="p-3">Status</th>
-                                <th class="p-3">Mã NV</th>
-                                <th class="p-3">Họ Tên</th>
-                                <th class="p-3">Team</th>
-                                <th class="p-3">Supervisor</th>
-                                <th class="p-3">Người Thực Hiện</th>
+                                <th class="p-3">Mã NV Thực Hiện</th>
+                                <th class="p-3">Họ Tên Thực Hiện</th>
+                                <th class="p-3">Ghi Chú Trả Hộ / Chi Tiết</th>
+                                <th class="p-3">Người Thực Hiện (Admin)</th>
                             </tr>
                         </thead>
                         <tbody id="logsTable" class="divide-y divide-gray-100"></tbody>
@@ -225,44 +227,32 @@
 
             <!-- TAB 4: QUẢN LÝ NHÂN VIÊN & IMPORT EXCEL -->
             <div id="tab-employees" class="tab-content hidden space-y-5">
+                
+                <!-- Khu vực Import Hàng Loạt từ Excel -->
                 <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 shadow-sm border border-emerald-200 space-y-3">
                     <div class="flex justify-between items-center">
                         <div>
                             <h2 class="text-base font-bold text-emerald-900 uppercase">
                                 <i class="fa-solid fa-file-excel text-emerald-600 mr-2"></i> Nhập Nhân Viên Hàng Loạt (Bulk Import)
                             </h2>
-                            <p class="text-xs text-emerald-700 mt-0.5">Tải file .xlsx/.csv hoặc Copy & Paste trực tiếp dữ liệu từ Google Sheets</p>
+                            <p class="text-xs text-emerald-700 mt-0.5">Tải file .xlsx hoặc .csv để thêm dữ liệu vào hệ thống</p>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-12 gap-4 pt-2">
-                        <div class="col-span-12 md:col-span-5 bg-white p-4 rounded-lg border border-emerald-200 flex flex-col justify-between">
-                            <div>
-                                <label class="block font-bold text-gray-700 mb-1">Cách 1: Chọn file Excel / CSV</label>
-                                <p class="text-xs text-gray-500 mb-3">Tự động nhận diện các cột: Ops ID, Họ tên, Email, Team, Supervisor</p>
-                            </div>
-                            <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200 cursor-pointer">
-                        </div>
-
-                        <div class="col-span-12 md:col-span-7 bg-white p-4 rounded-lg border border-emerald-200 space-y-2">
-                            <label class="block font-bold text-gray-700">Cách 2: Copy & Dán trực tiếp từ Google Sheets</label>
-                            <textarea id="pasteDataInput" rows="3" placeholder="Bôi đen toàn bộ dữ liệu trên Google Sheets, nhấn Ctrl+C rồi Dán (Ctrl+V) vào đây..." class="w-full p-2 border border-gray-300 rounded-lg text-xs font-mono outline-none focus:border-emerald-500"></textarea>
-                            <div class="flex justify-between items-center">
-                                <span id="importStatus" class="text-xs font-bold text-emerald-700"></span>
-                                <button onclick="processPasteImport()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg transition-all text-xs">
-                                    <i class="fa-solid fa-file-import mr-1"></i> Tải Dữ Liệu Dán Vào Hệ Thống
-                                </button>
-                            </div>
-                        </div>
+                    <div class="bg-white p-4 rounded-lg border border-emerald-200 md:w-1/2">
+                        <label class="block font-bold text-gray-700 mb-1">Chọn file Excel / CSV</label>
+                        <p class="text-xs text-gray-500 mb-3">Hệ thống sẽ tự động nhận diện các cột: <span class="font-semibold text-gray-700">Ops ID, Họ tên, Email, Team, Supervisor</span></p>
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200 cursor-pointer">
                     </div>
                 </div>
 
+                <!-- Form Sửa/Thêm Nhân viên -->
                 <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <h2 class="text-base font-bold text-gray-800 uppercase mb-3">Thêm Hoặc Cập Nhật Lẻ 1 Nhân Viên</h2>
                     <form id="empForm" onsubmit="saveEmployee(event)" class="grid grid-cols-6 gap-3">
                         <div>
                             <label class="block font-semibold text-gray-600 mb-1">Ops ID / Mã NV</label>
-                            <input type="text" id="empOpsId" required placeholder="Ops2120" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500">
+                            <input type="text" id="empOpsId" required placeholder="Ops2120" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500 bg-orange-50">
                         </div>
                         <div>
                             <label class="block font-semibold text-gray-600 mb-1">Họ và Tên</label>
@@ -281,21 +271,25 @@
                             <input type="text" id="empSup" required placeholder="Sup Xuân Huy" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500">
                         </div>
                         <div class="flex items-end">
-                            <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold p-2.5 rounded-lg transition-all">
+                            <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold p-2.5 rounded-lg transition-all shadow-md">
                                 <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Nhân Viên
                             </button>
                         </div>
                     </form>
                 </div>
 
+                <!-- Bảng danh sách nhân viên + Thanh tìm kiếm -->
                 <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <div class="flex justify-between items-center mb-3">
                         <h2 class="text-base font-bold text-gray-800 uppercase">Danh Sách Nhân Viên (<span id="empCount">0</span>)</h2>
-                        <input type="text" id="searchEmp" placeholder="Tìm tên, Ops ID, Team..." class="p-2 border rounded-lg w-72 text-sm">
+                        <div class="relative">
+                            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                            <input type="text" id="searchEmp" placeholder="Tìm theo Tên, Ops ID, Team..." class="pl-9 p-2 border border-gray-300 focus:border-orange-500 outline-none rounded-lg w-80 text-sm shadow-sm">
+                        </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-100 text-gray-600">
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                        <table class="w-full text-left relative">
+                            <thead class="bg-gray-100 text-gray-600 sticky top-0 shadow-sm z-10">
                                 <tr>
                                     <th class="p-3">Ops ID</th>
                                     <th class="p-3">Họ Tên</th>
@@ -314,12 +308,13 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC XỬ LÝ AUTO-FILL VÀ SCAN NHIỀU PDA -->
+    <!-- JAVASCRIPT LOGIC XỬ LÝ -->
     <script type="module">
         let selectedEmployee = null;
         let pendingBorrowPdaList = [];
-        let pendingReturnPdaList = [];
-        let employeeCache = []; // Cache danh sách NV để tìm kiếm tức thì
+        let pendingReturnPdaList = []; // Mảng chứa object { code, originalData }
+        let employeeCache = [];
+        let unreturnedCache = [];
 
         window.switchTab = function(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -341,9 +336,9 @@
             const db = window.db;
 
             onSnapshot(collection(db, "unreturned"), (snapshot) => {
-                const data = [];
-                snapshot.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
-                renderUnreturned(data);
+                unreturnedCache = [];
+                snapshot.forEach(doc => unreturnedCache.push({ id: doc.id, ...doc.data() }));
+                renderUnreturned(unreturnedCache);
             });
 
             onSnapshot(collection(db, "logs"), (snapshot) => {
@@ -359,14 +354,13 @@
             });
         });
 
-        // 1. AUTO-FILL TỰ ĐỘNG KHI SCAN/NHẬP OPS ID (KHÔNG CẦN BẤM XÁC NHẬN)
+        // 1. AUTO-FILL TỰ ĐỘNG KHI SCAN/NHẬP OPS ID
         const scanEmpInput = document.getElementById('scanEmpInput');
         if (scanEmpInput) {
             const checkAndFillEmployee = async () => {
                 const opsId = scanEmpInput.value.trim();
                 if (!opsId) return;
 
-                // Tìm trong cache trước để đạt tốc độ tức thì
                 let empData = employeeCache.find(e => e.opsId.toLowerCase() === opsId.toLowerCase());
 
                 if (!empData) {
@@ -388,22 +382,19 @@
                                 <p class="text-gray-500 font-mono text-xs">Mã NV: <span class="text-orange-600 font-bold">${empData.opsId}</span></p>
                                 <p class="text-gray-500 text-xs">Team: <span class="font-semibold text-gray-700">${empData.team || 'N/A'}</span> | Sup: <span class="font-semibold text-gray-700">${empData.supervisor || 'N/A'}</span></p>
                             </div>
-                            <span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded text-xs">✓ Đã nhận diện</span>
+                            <span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded text-xs">✓ Đã quét NV</span>
                         </div>
                     `;
-                    // Tự động chuyển con trỏ sang ô quét PDA mượn
-                    document.getElementById('borrowPdaInput').focus();
                 } else {
                     selectedEmployee = null;
                     empBox.innerHTML = `
                         <div class="text-red-500 font-bold text-xs">
-                            ⚠️ Không tìm thấy Ops ID "${opsId}". Vui lòng kiểm tra lại hoặc thêm vào thẻ Nhân Viên!
+                            ⚠️ Không tìm thấy Ops ID "${opsId}". Vui lòng kiểm tra lại!
                         </div>
                     `;
                 }
             };
 
-            // Sự kiện khi Barcode Scanner kết thúc bằng phím Enter
             scanEmpInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -411,7 +402,6 @@
                 }
             });
 
-            // Tự động nhận diện khi độ dài Ops ID đạt chuẩn (Realtime Input)
             scanEmpInput.addEventListener('input', () => {
                 if (scanEmpInput.value.trim().length >= 6) {
                     checkAndFillEmployee();
@@ -419,7 +409,7 @@
             });
         }
 
-        // 2. CHO PHÉP QUÉT NHIỀU MÃ PDA CÙNG LÚC
+        // 2. MƯỢN MÁY
         const borrowPdaInput = document.getElementById('borrowPdaInput');
         if (borrowPdaInput) {
             borrowPdaInput.addEventListener('keypress', (e) => {
@@ -435,14 +425,29 @@
             });
         }
 
+        // 3. TRẢ MÁY - TỰ ĐỘNG HIỂN THỊ THÔNG TIN NGƯỜI ĐANG GIỮ MÁY KHÔNG CẦN SCAN NV
         const returnPdaInput = document.getElementById('returnPdaInput');
         if (returnPdaInput) {
-            returnPdaInput.addEventListener('keypress', (e) => {
+            returnPdaInput.addEventListener('keypress', async (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     const code = returnPdaInput.value.trim();
-                    if (code && !pendingReturnPdaList.includes(code)) {
-                        pendingReturnPdaList.push(code);
+                    if (!code) return;
+
+                    // Kiểm tra xem máy có trong danh sách Unreturned không
+                    const activeRecord = unreturnedCache.find(item => item.pdaCode.toLowerCase() === code.toLowerCase());
+
+                    if (!activeRecord) {
+                        alert(`❌ Máy PDA ${code} hiện KHÔNG nằm trong danh sách đang mượn!`);
+                        returnPdaInput.value = '';
+                        return;
+                    }
+
+                    if (!pendingReturnPdaList.some(item => item.code.toLowerCase() === code.toLowerCase())) {
+                        pendingReturnPdaList.push({
+                            code: activeRecord.pdaCode,
+                            originalData: activeRecord
+                        });
                         renderPendingList();
                     }
                     returnPdaInput.value = '';
@@ -463,19 +468,28 @@
             let html = '';
             pendingBorrowPdaList.forEach((code, index) => {
                 html += `
-                    <span class="bg-emerald-100 text-emerald-800 text-xs font-mono font-bold px-2 py-1 rounded flex items-center gap-1">
-                        [Mượn] ${code}
-                        <button onclick="removePending('borrow', ${index})" class="text-emerald-600 hover:text-red-600 ml-1">×</button>
-                    </span>
+                    <div class="bg-emerald-100 text-emerald-800 text-xs font-mono font-bold px-2 py-1 rounded flex justify-between items-center">
+                        <span>[MƯỢN] ${code}</span>
+                        <button onclick="removePending('borrow', ${index})" class="text-emerald-600 hover:text-red-600 font-extrabold text-sm ml-2">×</button>
+                    </div>
                 `;
             });
 
-            pendingReturnPdaList.forEach((code, index) => {
+            pendingReturnPdaList.forEach((item, index) => {
+                // Kiểm tra xem có trả hộ không
+                let extraInfo = `(Đang mượn bởi: ${item.originalData.empName} - ${item.originalData.opsId})`;
+                if (selectedEmployee && selectedEmployee.opsId.toLowerCase() !== item.originalData.opsId.toLowerCase()) {
+                    extraInfo = `<span class="text-red-600 font-bold">[TRẢ HỘ]</span> bởi ${selectedEmployee.empName} ➔ cho ${item.originalData.empName}`;
+                }
+
                 html += `
-                    <span class="bg-amber-100 text-amber-800 text-xs font-mono font-bold px-2 py-1 rounded flex items-center gap-1">
-                        [Trả] ${code}
-                        <button onclick="removePending('return', ${index})" class="text-amber-600 hover:text-red-600 ml-1">×</button>
-                    </span>
+                    <div class="bg-amber-100 text-amber-900 text-xs px-2 py-1.5 rounded flex justify-between items-center border border-amber-200">
+                        <div>
+                            <span class="font-mono font-bold text-amber-800">[TRẢ] ${item.code}</span>
+                            <span class="ml-2 text-gray-600 text-[11px]">${extraInfo}</span>
+                        </div>
+                        <button onclick="removePending('return', ${index})" class="text-amber-700 hover:text-red-600 font-extrabold text-sm ml-2">×</button>
+                    </div>
                 `;
             });
 
@@ -494,14 +508,8 @@
             renderPendingList();
         };
 
-        // 3. XỬ LÝ LƯU BATCH NHIỀU PDA CÙNG LÚC
+        // 4. XỬ LÝ LƯU BATCH MƯỢN / TRẢ (BAO GỒM LOG TRẢ HỘ)
         window.processBatchTransaction = async function() {
-            // Nếu người dùng vừa gõ 1 máy lẻ mà chưa Enter vào danh sách chờ
-            const singleBorrow = borrowPdaInput.value.trim();
-            const singleReturn = returnPdaInput.value.trim();
-            if (singleBorrow && !pendingBorrowPdaList.includes(singleBorrow)) pendingBorrowPdaList.push(singleBorrow);
-            if (singleReturn && !pendingReturnPdaList.includes(singleReturn)) pendingReturnPdaList.push(singleReturn);
-
             if (pendingBorrowPdaList.length === 0 && pendingReturnPdaList.length === 0) {
                 alert("⚠️ Hãy quét ít nhất 1 mã PDA để cấp mượn hoặc thu hồi!");
                 return;
@@ -512,10 +520,10 @@
             const now = new Date().toLocaleString('vi-VN');
             const adminName = "HÀ VIỆT HÙNG";
 
-            // Process Borrowing
+            // XỬ LÝ MƯỢN MÁY
             if (pendingBorrowPdaList.length > 0) {
                 if (!selectedEmployee) {
-                    alert("⚠️ Vui lòng quét Ops ID nhân viên hợp lệ trước khi cấp mượn PDA!");
+                    alert("⚠️ Vui lòng quét Ops ID nhân viên mượn máy trước!");
                     return;
                 }
 
@@ -546,33 +554,43 @@
                         status: "MƯỢN",
                         opsId: selectedEmployee.opsId,
                         empName: selectedEmployee.empName,
-                        team: selectedEmployee.team || '',
-                        supervisor: selectedEmployee.supervisor || '',
+                        details: `Mượn máy trực tiếp`,
                         adminName: adminName
                     });
                 }
             }
 
-            // Process Returning
+            // XỬ LÝ TRẢ MÁY (Xử lý chi tiết Trả Hộ)
             if (pendingReturnPdaList.length > 0) {
-                for (const returnPda of pendingReturnPdaList) {
+                for (const item of pendingReturnPdaList) {
+                    const returnPda = item.code;
+                    const orig = item.originalData;
+
                     const q = query(collection(db, "unreturned"), where("pdaCode", "==", returnPda));
                     const snapshot = await getDocs(q);
 
                     if (!snapshot.empty) {
-                        const docData = snapshot.docs[0].data();
                         const docId = snapshot.docs[0].id;
-
                         await deleteDoc(doc(db, "unreturned", docId));
+
+                        let logOpsId = orig.opsId;
+                        let logEmpName = orig.empName;
+                        let logDetails = "Trả máy chính chủ";
+
+                        // Nếu có quét NV ở ô 1 VÀ khác với người mượn ban đầu -> Ghi nhận Trả Hộ
+                        if (selectedEmployee && selectedEmployee.opsId.toLowerCase() !== orig.opsId.toLowerCase()) {
+                            logOpsId = selectedEmployee.opsId;
+                            logEmpName = selectedEmployee.empName;
+                            logDetails = `⚠️ TRẢ HỘ cho [${orig.empName} - ${orig.opsId}]`;
+                        }
 
                         await addDoc(collection(db, "logs"), {
                             timestamp: now,
                             pdaCode: returnPda,
                             status: "TRẢ",
-                            opsId: docData.opsId,
-                            empName: docData.empName,
-                            team: docData.team || '',
-                            supervisor: docData.supervisor || '',
+                            opsId: logOpsId,
+                            empName: logEmpName,
+                            details: logDetails,
                             adminName: adminName
                         });
                     }
@@ -581,7 +599,6 @@
 
             alert("✅ Thực hiện thành công tất cả thao tác mượn/trả!");
 
-            // Reset Form
             clearPendingList();
             borrowPdaInput.value = '';
             returnPdaInput.value = '';
@@ -607,7 +624,7 @@
                     <td class="p-3">${item.borrowTime}</td>
                     <td class="p-3">${item.adminName}</td>
                     <td class="p-3 text-center">
-                        <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded font-bold text-xs">
+                        <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded font-bold text-xs shadow-sm">
                             Nhận Trả
                         </button>
                     </td>
@@ -629,15 +646,14 @@
 
         function renderLogs(logs) {
             document.getElementById('logsTable').innerHTML = logs.map(log => `
-                <tr>
-                    <td class="p-3 font-mono text-gray-500">${log.timestamp}</td>
-                    <td class="p-3 font-mono font-bold">${log.pdaCode}</td>
-                    <td class="p-3"><span class="${log.status === 'MƯỢN' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'} font-bold px-2 py-1 rounded text-xs">${log.status}</span></td>
-                    <td class="p-3 font-mono">${log.opsId}</td>
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3 font-mono text-gray-500 text-xs">${log.timestamp}</td>
+                    <td class="p-3 font-mono font-bold text-orange-600">${log.pdaCode}</td>
+                    <td class="p-3"><span class="${log.status === 'MƯỢN' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} font-bold px-2 py-1 rounded text-xs">${log.status}</span></td>
+                    <td class="p-3 font-mono font-semibold">${log.opsId}</td>
                     <td class="p-3 font-bold">${log.empName}</td>
-                    <td class="p-3">${log.team}</td>
-                    <td class="p-3">${log.supervisor}</td>
-                    <td class="p-3">${log.adminName}</td>
+                    <td class="p-3 text-xs ${log.details && log.details.includes('TRẢ HỘ') ? 'text-red-600 font-bold' : 'text-gray-600'}">${log.details || 'Chính chủ'}</td>
+                    <td class="p-3 text-xs">${log.adminName}</td>
                 </tr>
             `).join('');
         }
@@ -646,18 +662,62 @@
             document.getElementById('empCount').innerText = emps.length;
             const tbody = document.getElementById('employeesTable');
             tbody.innerHTML = emps.map(emp => `
-                <tr class="hover:bg-gray-50">
+                <tr class="hover:bg-gray-50 border-b border-gray-100">
                     <td class="p-3 font-mono font-bold text-orange-600">${emp.opsId}</td>
                     <td class="p-3 font-bold">${emp.empName}</td>
                     <td class="p-3 text-gray-500 font-mono text-xs">${emp.email || 'N/A'}</td>
                     <td class="p-3 font-semibold">${emp.team || 'N/A'}</td>
                     <td class="p-3">${emp.supervisor || 'N/A'}</td>
                     <td class="p-3 text-center">
-                        <button onclick="editEmployee('${emp.opsId}', '${emp.empName}', '${emp.email || ''}', '${emp.team || ''}', '${emp.supervisor || ''}')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded font-bold text-xs mr-1">Sửa</button>
+                        <button onclick="editEmployee('${emp.opsId}', '${emp.empName}', '${emp.email || ''}', '${emp.team || ''}', '${emp.supervisor || ''}')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-1.5 rounded font-bold text-xs mr-1 transition-all">Sửa</button>
                     </td>
                 </tr>
             `).join('');
         }
+
+        // Đẩy data từ bảng lên Form để Sửa
+        window.editEmployee = function(opsId, name, email, team, sup) {
+            document.getElementById('empOpsId').value = opsId;
+            document.getElementById('empName').value = name;
+            document.getElementById('empEmail').value = email;
+            document.getElementById('empTeam').value = team;
+            document.getElementById('empSup').value = sup;
+            
+            document.getElementById('empForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.getElementById('empTeam').focus();
+        };
+
+        // --- CẬP NHẬT / THÊM MỚI NHÂN VIÊN ---
+        window.saveEmployee = async function(e) {
+            e.preventDefault();
+            const { collection, addDoc, query, where, getDocs, updateDoc, doc } = window.fs;
+            const db = window.db;
+
+            const opsId = document.getElementById('empOpsId').value.trim();
+            const empName = document.getElementById('empName').value.trim();
+            const email = document.getElementById('empEmail').value.trim();
+            const team = document.getElementById('empTeam').value.trim();
+            const supervisor = document.getElementById('empSup').value.trim();
+
+            try {
+                const q = query(collection(db, "employees"), where("opsId", "==", opsId));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    const docId = querySnapshot.docs[0].id;
+                    await updateDoc(doc(db, "employees", docId), { empName, email, team, supervisor });
+                    alert(`✅ Đã cập nhật thành công Team/Sup cho nhân viên [${opsId}]!`);
+                } else {
+                    await addDoc(collection(db, "employees"), { opsId, empName, email, team, supervisor });
+                    alert(`✅ Đã thêm nhân viên mới [${opsId}] thành công!`);
+                }
+
+                document.getElementById('empForm').reset();
+            } catch (error) {
+                console.error("Lỗi khi lưu nhân viên: ", error);
+                alert("❌ Có lỗi xảy ra khi lưu. Vui lòng thử lại!");
+            }
+        };
 
         // --- IMPORT EXCEL ---
         async function saveBatchEmployees(dataArray) {
@@ -682,7 +742,7 @@
 
             if (count > 0) {
                 await batch.commit();
-                alert(`✅ Đã nhập thành công ${count} nhân viên vào Firestore!`);
+                alert(`✅ Đã tải thành công ${count} nhân viên từ file vào hệ thống!`);
             }
         }
 
@@ -710,52 +770,6 @@
             reader.readAsArrayBuffer(file);
         });
 
-        window.processPasteImport = async function() {
-            const text = document.getElementById('pasteDataInput').value.trim();
-            if (!text) return alert("Vui lòng dán dữ liệu!");
-
-            const rows = text.split('\n');
-            const dataToInsert = [];
-
-            rows.forEach((row) => {
-                const cols = row.split('\t');
-                if (cols.length >= 2) {
-                    const opsId = cols[0].trim();
-                    const empName = cols[1].trim();
-
-                    if (opsId.toLowerCase() === 'ops id' || opsId.toLowerCase() === 'mã nv') return;
-
-                    dataToInsert.push({
-                        opsId: opsId,
-                        empName: empName,
-                        email: cols[2] ? cols[2].trim() : '',
-                        team: cols[5] ? cols[5].trim() : (cols[3] ? cols[3].trim() : ''),
-                        supervisor: cols[6] ? cols[6].trim() : (cols[4] ? cols[4].trim() : '')
-                    });
-                }
-            });
-
-            await saveBatchEmployees(dataToInsert);
-            document.getElementById('pasteDataInput').value = '';
-        };
-
-        window.saveEmployee = async function(e) {
-            e.preventDefault();
-            const { collection, addDoc } = window.fs;
-            const db = window.db;
-
-            await addDoc(collection(db, "employees"), {
-                opsId: document.getElementById('empOpsId').value.trim(),
-                empName: document.getElementById('empName').value.trim(),
-                email: document.getElementById('empEmail').value.trim(),
-                team: document.getElementById('empTeam').value.trim(),
-                supervisor: document.getElementById('empSup').value.trim()
-            });
-
-            alert("Đã thêm thành công!");
-            document.getElementById('empForm').reset();
-        };
-
         window.returnPdaDirect = async function(docId, pdaCode) {
             if (!confirm(`Xác nhận thu hồi PDA [${pdaCode}]?`)) return;
 
@@ -770,14 +784,23 @@
                 const data = docSnap.data();
                 await deleteDoc(unreturnedRef);
 
+                let logOpsId = data.opsId;
+                let logEmpName = data.empName;
+                let logDetails = "Nhận trả trực tiếp tại bảng";
+
+                if (selectedEmployee && selectedEmployee.opsId.toLowerCase() !== data.opsId.toLowerCase()) {
+                    logOpsId = selectedEmployee.opsId;
+                    logEmpName = selectedEmployee.empName;
+                    logDetails = `⚠️ TRẢ HỘ cho [${data.empName} - ${data.opsId}]`;
+                }
+
                 await addDoc(collection(db, "logs"), {
                     timestamp: now,
                     pdaCode: pdaCode,
                     status: "TRẢ",
-                    opsId: data.opsId,
-                    empName: data.empName,
-                    team: data.team || '',
-                    supervisor: data.supervisor || '',
+                    opsId: logOpsId,
+                    empName: logEmpName,
+                    details: logDetails,
                     adminName: "HÀ VIỆT HÙNG"
                 });
 
@@ -785,21 +808,23 @@
             }
         };
 
-        const searchUnreturned = document.getElementById('searchUnreturned');
-        if (searchUnreturned) {
-            searchUnreturned.addEventListener('keyup', function() {
-                const keyword = this.value.toLowerCase();
-                document.querySelectorAll('#unreturnedFullTable tr').forEach(row => {
+        // Tìm kiếm nhân viên
+        const searchEmp = document.getElementById('searchEmp');
+        if (searchEmp) {
+            searchEmp.addEventListener('input', function() {
+                const keyword = this.value.toLowerCase().trim();
+                document.querySelectorAll('#employeesTable tr').forEach(row => {
                     row.style.display = row.innerText.toLowerCase().includes(keyword) ? '' : 'none';
                 });
             });
         }
 
-        const searchEmp = document.getElementById('searchEmp');
-        if (searchEmp) {
-            searchEmp.addEventListener('keyup', function() {
+        // Tìm kiếm Unreturned
+        const searchUnreturned = document.getElementById('searchUnreturned');
+        if (searchUnreturned) {
+            searchUnreturned.addEventListener('keyup', function() {
                 const keyword = this.value.toLowerCase();
-                document.querySelectorAll('#employeesTable tr').forEach(row => {
+                document.querySelectorAll('#unreturnedFullTable tr').forEach(row => {
                     row.style.display = row.innerText.toLowerCase().includes(keyword) ? '' : 'none';
                 });
             });
