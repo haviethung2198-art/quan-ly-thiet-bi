@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HỆ THỐNG QUẢN LÝ CẤP PHÁT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        /* Hiệu ứng sóng radar LIVE */
+        .radar-box {
+            position: relative;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255, 247, 237, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .radar-circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="bg-[#f4f6f8] text-gray-800 text-xs">
+
+    <!-- Header chính (Màu cam gradient) -->
+    <header class="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-2.5 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-white/20 p-2 rounded-lg">
+                <i class="fa-solid fa-boxes-stacked text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-base font-extrabold tracking-wide uppercase leading-tight">HỆ THỐNG QUẢN LÝ CẤP PHÁT</h1>
+                <p class="text-[10px] text-orange-100 font-medium">BN B Mega SOC</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 text-right">
+            <div>
+                <p class="font-semibold text-[11px]" id="currentDay">Thứ ba – Ngày 04/08/2026</p>
+                <p class="text-[10px] text-orange-100">Thời gian hiện tại: <span id="currentTime" class="font-mono font-bold">20:05:30</span></p>
+            </div>
+            <button onclick="location.reload()" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg transition-all">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Sub-header (Thông tin Admin) -->
+    <div class="bg-orange-50/60 px-6 py-1.5 border-b border-orange-100 flex items-center gap-2 text-gray-600 text-[11px]">
+        <i class="fa-solid fa-[#f97316] fa-user-shield text-orange-500"></i>
+        <span>Admin:</span>
+        <span class="font-bold text-gray-800">HÀ VIỆT HÙNG</span>
+        <span class="text-gray-400">(hung.haviet@spexpress.com)</span>
+    </div>
+
+    <!-- Main Content -->
+    <main class="p-4 max-w-[1600px] mx-auto space-y-4">
+
+        <!-- Grid 3 Phần: Trạng Thái | OPS ID | Quét Thiết Bị -->
+        <div class="grid grid-cols-12 gap-4">
+
+            <!-- CỘT 1: TRẠNG THÁI KHO (3 Cột) -->
+            <div class="col-span-12 lg:col-span-2 bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col justify-between space-y-3">
+                <div class="flex justify-between items-center border-b pb-2 border-gray-100">
+                    <div class="flex items-center gap-1.5 font-bold text-gray-700">
+                        <i class="fa-solid fa-chart-simple text-orange-500"></i>
+                        <span class="uppercase">Trạng thái</span>
+                    </div>
+                    <span class="bg-orange-100 text-orange-600 font-bold px-1.5 py-0.5 rounded-full text-[10px]">77 Máy</span>
+                </div>
+
+                <!-- MT93 (Máy mới) -->
+                <div>
+                    <div class="flex justify-between items-end mb-1">
+                        <div>
+                            <span class="font-bold text-sm text-gray-800">MT93</span>
+                            <span class="text-[10px] text-gray-400 block">(Máy mới)</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-gray-400">Còn:</span>
+                            <span class="font-bold text-sm text-gray-800">4</span><span class="text-gray-400">/ 54</span>
+                        </div>
+                    </div>
+                    <!-- Thanh Progress bar đỏ -->
+                    <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-red-500 h-full w-[93%]"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-gray-400 mt-1">
+                        <span>Mượn: 50 máy</span>
+                        <span class="font-bold text-gray-600">TL: 93%</span>
+                    </div>
+                </div>
+
+                <!-- Radar Live Widget -->
+                <div class="flex flex-col items-center justify-center py-1">
+                    <div class="radar-box">
+                        <div class="radar-circle"></div>
+                        <div class="flex flex-col items-center">
+                            <i class="fa-solid fa-wifi text-orange-500 text-sm mb-0.5"></i>
+                            <span class="text-[9px] font-bold text-orange-500 tracking-wider">● LIVE</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MT90 (Máy cũ) -->
+                <div>
+                    <div class="flex justify-between items-end mb-1">
+                        <div>
+                            <span class="font-bold text-sm text-gray-800">MT90</span>
+                            <span class="text-[10px] text-gray-400 block">(Máy cũ)</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-gray-400">Còn:</span>
+                            <span class="font-bold text-sm text-gray-800">19</span><span class="text-gray-400">/ 23</span>
+                        </div>
+                    </div>
+                    <!-- Thanh Progress bar xanh -->
+                    <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-blue-400 h-full w-[17%]"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-gray-400 mt-1">
+                        <span>Mượn: 4 máy</span>
+                        <span class="font-bold text-gray-600">TL: 17%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CỘT 2: OPS ID (4 Cột) -->
+            <div class="col-span-12 lg:col-span-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between space-y-3">
+                <div>
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="w-5 h-5 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">1</span>
+                        <h2 class="font-bold text-gray-800 text-sm uppercase">OPS ID</h2>
+                    </div>
+
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">QUÉT HOẶC NHẬP OPS ID / STAFF ID</label>
+                    <div class="flex gap-2 mb-1">
+                        <div class="relative flex-1">
+                            <i class="fa-regular fa-user absolute left-3 top-2.5 text-gray-400"></i>
+                            <input type="text" placeholder="Quét thẻ tại đây..." class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-orange-500 bg-gray-50/50">
+                        </div>
+                        <button class="bg-orange-50 text-orange-600 border border-orange-200 px-2.5 rounded-lg">
+                            <i class="fa-solid fa-camera"></i>
+                        </button>
+                        <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-2 rounded-lg text-xs">CHECK</button>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mb-4">ⓘ Nhập mã nhân viên để tự động tìm thông tin</p>
+
+                    <!-- Khung kết quả tìm thấy -->
+                    <div class="border border-gray-100 rounded-xl p-3 bg-gray-50/40">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">KẾT QUẢ TÌM THẤY</span>
+                            <span class="bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded-full">Chờ quét...</span>
+                        </div>
+                        <p class="font-bold text-gray-700 text-sm mt-1">Chưa có thông tin nhân viên</p>
+                        <p class="text-[11px] text-gray-400">Vui lòng quét thẻ hoặc nhập Ops ID ở trên</p>
+                    </div>
+                </div>
+
+                <!-- Dropdown Chọn Team & Sup -->
+                <div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-400 block mb-1">TEAM</label>
+                            <select class="w-full border border-gray-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-orange-500 text-gray-600">
+                                <option>-- Chọn Team --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-400 block mb-1">SUPERVISOR</label>
+                            <select class="w-full border border-gray-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-orange-500 text-gray-600">
+                                <option>-- Chọn Sup --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-orange-50/50 border border-orange-100 rounded-lg p-2.5 flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-md bg-orange-100 text-orange-600 flex items-center justify-center">
+                            <i class="fa-solid fa-shield-halved text-xs"></i>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-orange-600 uppercase">SUPERVISOR</p>
+                            <p class="text-[11px] font-bold text-gray-600">Chưa chọn Team</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CỘT 3: QUÉT THIẾT BỊ (6 Cột) -->
+            <div class="col-span-12 lg:col-span-6 bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">2</span>
+                            <h2 class="font-bold text-gray-800 text-sm uppercase">QUÉT THIẾT BỊ</h2>
+                        </div>
+                        <span class="text-[11px] text-gray-500"><span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span>Tắt Unikey để nhập chính xác mã máy</span>
+                    </div>
+
+                    <!-- Tab Mượn máy / Trả máy -->
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <!-- Box 1: Mượn Máy -->
+                        <div class="border-2 border-emerald-400/80 border-dashed rounded-xl p-3 bg-emerald-50/20">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-bold text-emerald-700 text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> 1. MƯỢN MÁY
+                                </span>
+                                <button class="text-emerald-600 hover:bg-emerald-100 p-1 rounded">
+                                    <i class="fa-solid fa-camera"></i>
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <i class="fa-solid fa-qrcode absolute left-2.5 top-2.5 text-gray-400"></i>
+                                <input type="text" placeholder="Quét PDA cấp..." class="w-full pl-7 pr-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none bg-white">
+                            </div>
+                            <p class="text-[9px] text-gray-400 mt-1">Bấm Enter hoặc dùng Camera để thêm.</p>
+                        </div>
+
+                        <!-- Box 2: Trả Máy -->
+                        <div class="border-2 border-amber-300 border-dashed rounded-xl p-3 bg-amber-50/20">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-bold text-amber-700 text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-center"></i> 2. TRẢ MÁY
+                                </span>
+                                <button class="text-amber-600 hover:bg-amber-100 p-1 rounded">
+                                    <i class="fa-solid fa-camera"></i>
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <i class="fa-solid fa-box-archive absolute left-2.5 top-2.5 text-gray-400"></i>
+                                <input type="text" placeholder="Quét PDA trả..." class="w-full pl-7 pr-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none bg-white">
+                            </div>
+                            <p class="text-[9px] text-gray-400 mt-1">Bấm Enter hoặc dùng Camera để nhận.</p>
+                        </div>
+                    </div>
+
+                    <!-- Nút Xác nhận disabled -->
+                    <button class="w-full bg-slate-200 hover:bg-slate-300 text-slate-500 font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all cursor-not-allowed">
+                        <i class="fa-regular fa-circle-check"></i> XÁC NHẬN (0 máy)
+                    </button>
+                </div>
+
+                <!-- Hàng chờ duyệt -->
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fa-solid fa-list-ul text-gray-400"></i>
+                        <span class="font-bold text-gray-600 uppercase text-[11px]">HÀNG CHỜ DUYỆT ( 0 )</span>
+                    </div>
+                    <div class="border border-gray-100 rounded-xl p-6 text-center bg-gray-50/30 flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-qrcode text-gray-300 text-2xl mb-1"></i>
+                        <p class="text-gray-400 text-[11px]">Chưa có máy nào được xếp hàng chờ.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- BẢNG DANH SÁCH PDA CHƯA TRẢ (Realtime Tracking) -->
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-shield text-orange-500"></i>
+                    <h2 class="font-bold text-gray-800 text-sm uppercase">PDA CHƯA TRẢ <span class="text-orange-500">(54)</span></h2>
+                </div>
+                <span class="bg-orange-100 text-orange-600 font-bold px-2 py-0.5 rounded text-[10px] tracking-wider">REALTIME TRACKING</span>
+            </div>
+
+            <!-- Thanh Tìm Kiếm -->
+            <div class="relative mb-3">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400"></i>
+                <input type="text" placeholder="Tìm theo Mã PDA, Ops ID, Tên người mượn..." class="w-full pl-9 pr-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-orange-500 bg-gray-50/30">
+            </div>
+
+            <!-- Bảng Dữ Liệu -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-[10px] font-bold text-gray-400 uppercase border-b border-gray-100 pb-2">
+                            <th class="py-2 px-3">MÃ PDA</th>
+                            <th class="py-2 px-3">THÔNG TIN NGƯỜI MƯỢN</th>
+                            <th class="py-2 px-3">TEAM/SUPERVISOR</th>
+                            <th class="py-2 px-3">ADMIN</th>
+                            <th class="py-2 px-3">THỜI GIAN MƯỢN</th>
+                            <th class="py-2 px-3 text-right">THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        <tr class="hover:bg-orange-50/30 transition-all">
+                            <td class="py-3 px-3 font-mono font-bold text-gray-800">MT93LHSGSEFL01878</td>
+                            <td class="py-3 px-3">
+                                <p class="font-bold text-gray-800 text-xs">Nguyễn Thị Hằng</p>
+                                <p class="text-[10px] text-gray-400">Ops ID: Ops196539</p>
+                            </td>
+                            <td class="py-3 px-3">
+                                <p class="font-bold text-gray-700 flex items-center gap-1"><i class="fa-solid fa-gear text-[10px] text-gray-400"></i> ASM</p>
+                                <p class="text-[10px] text-gray-400">Sup: Sup Xuân Huy</p>
+                            </td>
+                            <td class="py-3 px-3">
+                                <span class="bg-orange-50 border border-orange-200 text-orange-700 font-semibold px-2 py-1 rounded-full text-[10px]">
+                                    <i class="fa-solid fa-user-gear mr-1"></i>NGUYỄN HỮU TÚ MINH
+                                </span>
+                            </td>
+                            <td class="py-3 px-3 text-gray-600 font-mono">2026-08-04 09:54:21</td>
+                            <td class="py-3 px-3 text-right">
+                                <button class="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-3 py-1 rounded-lg font-bold text-[11px] transition-all flex items-center gap-1 ml-auto">
+                                    <i class="fa-solid fa-box-archive"></i> Nhận trả
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- JS Đồng hồ Realtime -->
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            const timeString = `${hours}:${minutes}:${seconds}`;
+            const clockEl = document.getElementById('currentTime');
+            if(clockEl) clockEl.innerText = timeString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+</body>
+</html>
