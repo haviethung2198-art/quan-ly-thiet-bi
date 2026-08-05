@@ -368,74 +368,76 @@
                 </div>
             </div>
 
-            <!-- TAB 4: QUẢN LÝ NHÂN VIÊN & IMPORT EXCEL -->
-            <div id="tab-employees" class="tab-content hidden space-y-4">
-                <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 shadow-sm border border-emerald-200 space-y-2">
-                    <div class="flex justify-between items-center">
+            <!-- TAB 4: QUẢN LÝ NHÂN VIÊN (ĐÃ THU GỌN BULK IMPORT VÀ TỐI ƯU KHÔNG GIAN BẢNG) -->
+            <div id="tab-employees" class="tab-content hidden flex-1 flex flex-col space-y-3 h-full min-h-0 overflow-hidden">
+                <!-- THANH THAO TÁC BULK IMPORT THU GỌN -->
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-file-excel text-emerald-600 text-base"></i>
                         <div>
-                            <h2 class="text-base font-bold text-emerald-900 uppercase">
-                                <i class="fa-solid fa-file-excel text-emerald-600 mr-2"></i> Nhập Nhân Viên Hàng Loạt (Bulk Import)
-                            </h2>
-                            <p class="text-xs text-emerald-700 mt-0.5">Tải file .xlsx hoặc .csv để thêm dữ liệu vào hệ thống</p>
+                            <span class="font-bold text-emerald-900 text-xs uppercase">Nhập Nhân Viên Hàng Loạt</span>
+                            <span class="text-[11px] text-emerald-700 ml-1 hidden sm:inline">(Tải file Excel .xlsx, .csv)</span>
                         </div>
                     </div>
-                    <div class="bg-white p-3 rounded-lg border border-emerald-200 md:w-1/2">
-                        <label class="block font-bold text-gray-700 mb-1 text-xs">Chọn file Excel / CSV</label>
-                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200 cursor-pointer disabled:opacity-50">
-                    </div>
+                    <label class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-all flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-file-import"></i> Chọn File Excel
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden">
+                    </label>
                 </div>
 
-                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                    <h2 class="text-base font-bold text-gray-800 uppercase mb-2">Thêm Hoặc Cập Nhật Lẻ 1 Nhân Viên</h2>
+                <!-- FORM NHẬP LẺ 1 NHÂN VIÊN -->
+                <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-200 shrink-0">
+                    <h2 class="text-xs font-bold text-gray-800 uppercase mb-2">Thêm / Cập Nhật Lẻ Nhân Viên</h2>
                     <form id="empForm" onsubmit="saveEmployee(event)" class="grid grid-cols-6 gap-2">
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Ops ID / Mã NV</label>
-                            <input type="text" id="empOpsId" required placeholder="Ops2120" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500 bg-orange-50 font-bold text-xs">
+                            <label class="block font-semibold text-gray-600 mb-0.5 text-[11px]">Ops ID / Mã NV</label>
+                            <input type="text" id="empOpsId" required placeholder="Ops2120" class="w-full p-1.5 border rounded-lg outline-none focus:border-orange-500 bg-orange-50 font-bold text-xs">
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Họ và Tên</label>
-                            <input type="text" id="empName" required placeholder="BÙI VĂN VĨ" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500 font-semibold text-xs">
+                            <label class="block font-semibold text-gray-600 mb-0.5 text-[11px]">Họ và Tên</label>
+                            <input type="text" id="empName" required placeholder="BÙI VĂN VĨ" class="w-full p-1.5 border rounded-lg outline-none focus:border-orange-500 font-semibold text-xs">
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Email</label>
-                            <input type="email" id="empEmail" placeholder="vi.buivan@spxexpress.com" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500 text-xs">
+                            <label class="block font-semibold text-gray-600 mb-0.5 text-[11px]">Email</label>
+                            <input type="email" id="empEmail" placeholder="vi.buivan@spxexpress.com" class="w-full p-1.5 border rounded-lg outline-none focus:border-orange-500 text-xs">
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Team</label>
-                            <input type="text" id="empTeam" list="teamOptions" placeholder="Chọn / Nhập Team..." class="w-full p-2 border border-orange-300 rounded-lg outline-none focus:border-orange-600 bg-white font-semibold text-xs">
+                            <label class="block font-semibold text-gray-600 mb-0.5 text-[11px]">Team</label>
+                            <input type="text" id="empTeam" list="teamOptions" placeholder="Chọn / Nhập Team..." class="w-full p-1.5 border border-orange-300 rounded-lg outline-none focus:border-orange-600 bg-white font-semibold text-xs">
                             <datalist id="teamOptions"></datalist>
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Supervisor Direct</label>
-                            <input type="text" id="empSup" list="supOptions" required placeholder="Chọn / Nhập Sup..." class="w-full p-2 border border-orange-300 rounded-lg outline-none focus:border-orange-600 bg-white font-semibold text-xs">
+                            <label class="block font-semibold text-gray-600 mb-0.5 text-[11px]">Supervisor Direct</label>
+                            <input type="text" id="empSup" list="supOptions" required placeholder="Chọn / Nhập Sup..." class="w-full p-1.5 border border-orange-300 rounded-lg outline-none focus:border-orange-600 bg-white font-semibold text-xs">
                             <datalist id="supOptions"></datalist>
                         </div>
                         <div class="flex items-end">
-                            <button type="submit" id="btnSaveEmp" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold p-2.5 rounded-lg transition-all shadow-md disabled:opacity-50 text-xs">
+                            <button type="submit" id="btnSaveEmp" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold p-2 rounded-lg transition-all shadow-md disabled:opacity-50 text-xs">
                                 <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Nhân Viên
                             </button>
                         </div>
                     </form>
                 </div>
 
-                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                    <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+                <!-- BẢNG DANH SÁCH NHÂN VIÊN KÉO DÀI TỐI ĐA CHIỀU CAO -->
+                <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-200 flex-1 flex flex-col min-h-0 overflow-hidden">
+                    <div class="flex flex-wrap justify-between items-center gap-2 mb-2 shrink-0">
                         <div class="flex items-center gap-2">
-                            <h2 class="text-base font-bold text-gray-800 uppercase">Danh Sách Nhân Viên (<span id="empCount">0</span>)</h2>
-                            <button id="btnDeleteSelectedEmp" onclick="deleteSelectedEmployees()" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-bold px-2.5 py-1 rounded-lg text-xs transition-all flex items-center gap-1 disabled:opacity-50">
+                            <h2 class="text-xs font-bold text-gray-800 uppercase">Danh Sách Nhân Viên (<span id="empCount">0</span>)</h2>
+                            <button id="btnDeleteSelectedEmp" onclick="deleteSelectedEmployees()" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-bold px-2 py-0.5 rounded-lg text-xs transition-all flex items-center gap-1 disabled:opacity-50">
                                 <i class="fa-solid fa-trash-can"></i> Xóa Đã Chọn
                             </button>
-                            <button id="btnDeleteAllEmp" onclick="deleteAllEmployees()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 py-1 rounded-lg text-xs transition-all flex items-center gap-1 shadow-sm disabled:opacity-50">
+                            <button id="btnDeleteAllEmp" onclick="deleteAllEmployees()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2 py-0.5 rounded-lg text-xs transition-all flex items-center gap-1 shadow-sm disabled:opacity-50">
                                 <i class="fa-solid fa-triangle-exclamation"></i> Xóa Tất Cả CSDL
                             </button>
                         </div>
                         <div class="relative">
-                            <i class="fa-solid fa-search absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
-                            <input type="text" id="searchEmp" placeholder="Tìm theo Tên, Ops ID, Team, Sup..." class="pl-8 p-1.5 border border-orange-300 focus:border-orange-600 outline-none rounded-lg w-72 text-xs font-semibold">
+                            <i class="fa-solid fa-search absolute left-2.5 top-2 text-gray-400 text-xs"></i>
+                            <input type="text" id="searchEmp" placeholder="Tìm theo Tên, Ops ID, Team, Sup..." class="pl-8 p-1 border border-orange-300 focus:border-orange-600 outline-none rounded-lg w-72 text-xs font-semibold">
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto max-h-[450px] overflow-y-auto">
+                    <div class="flex-1 overflow-y-auto border rounded-lg border-gray-100">
                         <table class="w-full text-left relative">
                             <thead class="bg-gray-100 text-gray-600 sticky top-0 shadow-sm z-10 font-bold text-xs">
                                 <tr>
@@ -581,7 +583,7 @@
             }
         });
 
-        // 1. HỆ THỐNG THÔNG BÁO TOAST MỚI (CẠNH MÀN HÌNH CHẤT LƯỢNG CAO)
+        // HỆ THỐNG THÔNG BÁO TOAST MỚI (CẠNH MÀN HÌNH CHẤT LƯỢNG CAO)
         window.showToast = function(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -613,7 +615,7 @@
             }, 3500);
         };
 
-        // 2. CUSTOM DIALOG TÙY CHỈNH NỘI BỘ THAY THẾ CONFIRM() CỦA TRÌNH DUYỆT
+        // CUSTOM DIALOG TÙY CHỈNH NỘI BỘ THAY THẾ CONFIRM() CỦA TRÌNH DUYỆT
         window.showCustomConfirm = function(title, message, isDanger = false) {
             return new Promise((resolve) => {
                 customConfirmResolver = resolve;
@@ -639,7 +641,7 @@
             }
         };
 
-        // 3. BỘ KIỂM TRA PHÁT HIỆN BỘ GÕ TIẾNG VIỆT & TỪ CHỐI TRUY CẬP
+        // BỘ KIỂM TRA PHÁT HIỆN BỘ GÕ TIẾNG VIỆT & TỪ CHỐI TRUY CẬP
         function setupVietnameseDetector(inputElement) {
             let isComposing = false;
 
@@ -1006,7 +1008,7 @@
             });
         }
 
-        // TRẢ MÁY - TỰ ĐỘNG HIỆN THÔNG TIN NGƯỜI TRẢ MÀ KHÔNG CẦN NHẬP TAY
+        // TRẢ MÁY
         const returnPdaInput = document.getElementById('returnPdaInput');
         if (returnPdaInput) {
             returnPdaInput.addEventListener('keypress', async (e) => {
@@ -1107,7 +1109,6 @@
             renderPendingList();
         };
 
-        // TỐI ƯU HÓA BATCH GHI NHẬN TỨC THÌ (SỬ DỤNG TOAST KHÔNG HIỆN ALERT POPUP)
         window.processBatchTransaction = async function() {
             if (currentUserRole === 'guest') {
                 showToast("Tài khoản của bạn chưa được cấp quyền thao tác!", 'warning');
@@ -1695,7 +1696,6 @@
             reader.readAsArrayBuffer(file);
         });
 
-        // NHẬN TRẢ TRỰC TIẾP TẬN DỤNG TOAST MƠI
         window.returnPdaDirect = async function(docId, pdaCode) {
             if (currentUserRole === 'guest') return;
 
