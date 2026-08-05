@@ -63,7 +63,7 @@
     <!-- CONTAINER THÔNG BÁO TOAST GÓC BÊN PHẢI MÀN HÌNH -->
     <div id="toastContainer" class="fixed top-4 right-4 z-[200] flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
 
-    <!-- CUSTOM DIALOG XÁC NHẬN / THÔNG BÁO TÙY CHỈNH THAY THẾ ALERT/CONFIRM -->
+    <!-- CUSTOM DIALOG XÁC NHẬN -->
     <div id="customConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 transition-all transform scale-100">
             <div id="confirmHeader" class="p-4 bg-slate-900 text-white flex items-center gap-3">
@@ -187,26 +187,29 @@
                 <span><i class="fa-solid fa-lock mr-2"></i> Tài khoản Google của bạn chưa được phân quyền thực hiện. Các chức năng Thêm/Sửa/Xóa/Cấp phát đã bị khóa!</span>
             </div>
 
-            <!-- TAB 1: CẤP PHÁT MÁY (DASHBOARD) TỐI ƯU BỐ CỤC KHÔNG GIAN -->
+            <!-- TAB 1: CẤP PHÁT MÁY (DASHBOARD) -->
             <div id="tab-dashboard" class="tab-content flex-1 flex flex-col space-y-4 min-h-0">
                 
                 <!-- HÀNG CÁC THẺ PHÍA TRÊN -->
                 <div class="grid grid-cols-12 gap-4 items-stretch">
                     
-                    <!-- THẺ 1: TRẠNG THÁI KHO (2/12 CỘT) -->
+                    <!-- THẺ 1: TRẠNG THÁI KHO (CÓ THỂ CLICK CHỈNH SỬA TỔNG MÁY) -->
                     <div class="col-span-12 lg:col-span-2 bg-white rounded-xl p-4 shadow-sm border border-gray-200 flex flex-col justify-between">
                         <div class="flex justify-between items-center border-b pb-2.5">
                             <span class="font-extrabold text-gray-800 uppercase text-xs tracking-wide">Trạng Thái Kho</span>
                             <span class="bg-orange-100 text-orange-600 font-bold px-2 py-0.5 rounded-full text-[10px]">Realtime</span>
                         </div>
 
+                        <!-- KHO MT93 (MÁY MỚI) -->
                         <div class="space-y-2 my-2">
                             <div class="flex justify-between font-extrabold text-sm">
                                 <span>MT93 (Máy mới)</span>
-                                <span class="text-orange-600">Còn: 4/54</span>
+                                <span class="text-orange-600">
+                                    Còn: <span id="mt93AvailableText">4</span>/<button onclick="editTotalDevices('mt93')" title="Click để chỉnh sửa tổng máy MT93" class="hover:underline font-extrabold text-orange-700 bg-orange-50 px-1 rounded border border-orange-200"><span id="mt93TotalText">54</span> <i class="fa-solid fa-pen text-[9px]"></i></button>
+                                </span>
                             </div>
                             <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
-                                <div class="bg-red-500 h-full w-[93%]"></div>
+                                <div id="mt93ProgressBar" class="bg-red-500 h-full transition-all duration-500" style="width: 93%;"></div>
                             </div>
                         </div>
 
@@ -217,13 +220,16 @@
                             </div>
                         </div>
 
+                        <!-- KHO MT90 (MÁY CŨ) -->
                         <div class="space-y-2 my-2">
                             <div class="flex justify-between font-extrabold text-sm">
                                 <span>MT90 (Máy cũ)</span>
-                                <span class="text-blue-600">Còn: 19/23</span>
+                                <span class="text-blue-600">
+                                    Còn: <span id="mt90AvailableText">19</span>/<button onclick="editTotalDevices('mt90')" title="Click để chỉnh sửa tổng máy MT90" class="hover:underline font-extrabold text-blue-700 bg-blue-50 px-1 rounded border border-blue-200"><span id="mt90TotalText">23</span> <i class="fa-solid fa-pen text-[9px]"></i></button>
+                                </span>
                             </div>
                             <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
-                                <div class="bg-blue-500 h-full w-[17%]"></div>
+                                <div id="mt90ProgressBar" class="bg-blue-500 h-full transition-all duration-500" style="width: 17%;"></div>
                             </div>
                         </div>
                     </div>
@@ -245,12 +251,16 @@
 
                         <div class="grid grid-cols-2 gap-3 pt-1">
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">TEAM</label>
-                                <input type="text" id="displayEmpTeam" readonly placeholder="Team..." class="w-full p-2.5 border border-gray-300 rounded-lg bg-gray-50 font-bold text-gray-700 outline-none text-xs">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">TEAM (Thay đổi được)</label>
+                                <select id="displayEmpTeam" class="w-full p-2.5 border border-orange-300 rounded-lg bg-white font-bold text-gray-800 outline-none text-xs focus:border-orange-600 cursor-pointer">
+                                    <option value="">-- Chọn Team --</option>
+                                </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">SUPERVISOR DIRECT</label>
-                                <input type="text" id="displayEmpSup" readonly placeholder="Supervisor..." class="w-full p-2.5 border border-gray-300 rounded-lg bg-gray-50 font-bold text-gray-700 outline-none text-xs">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">SUPERVISOR DIRECT (Thay đổi được)</label>
+                                <select id="displayEmpSup" class="w-full p-2.5 border border-orange-300 rounded-lg bg-white font-bold text-gray-800 outline-none text-xs focus:border-orange-600 cursor-pointer">
+                                    <option value="">-- Chọn Sup --</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -289,7 +299,7 @@
                     </div>
                 </div>
 
-                <!-- THẺ HOÀN TOÀN BÊN DƯỚI: PDA CHƯA TRẢ REALTIME TRACKER (TĂNG CHIỀU CAO & KÍCH THƯỚC FONT) -->
+                <!-- THẺ BÊN DƯỚI: PDA CHƯA TRẢ REALTIME TRACKER -->
                 <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200 flex-1 flex flex-col min-h-0">
                     <div class="flex justify-between items-center mb-3 pb-2 border-b">
                         <h3 class="font-extrabold text-gray-800 uppercase flex items-center gap-2 text-xs tracking-wide">
@@ -565,6 +575,10 @@
         let currentModalPdaCodes = [];
         let customConfirmResolver = null;
 
+        // BIẾN Cấu hình tổng số máy kho
+        let totalMt93 = parseInt(localStorage.getItem('totalMt93')) || 54;
+        let totalMt90 = parseInt(localStorage.getItem('totalMt90')) || 23;
+
         const { signInWithPopup, signOut, onAuthStateChanged } = window.authMethods;
         const auth = window.auth;
         const provider = window.googleProvider;
@@ -652,6 +666,58 @@
             }
         };
 
+        // HÀM CHỈNH SỬA TỔNG SỐ LƯỢNG MÁY TRONG KHO
+        window.editTotalDevices = function(type) {
+            if (currentUserRole === 'guest') {
+                showToast("Bạn không có quyền chỉnh sửa thông số kho!", 'warning');
+                return;
+            }
+
+            if (type === 'mt93') {
+                const input = prompt("Nhập TỔNG SỐ LƯỢNG máy MT93 (Máy mới):", totalMt93);
+                if (input !== null && !isNaN(input) && parseInt(input) > 0) {
+                    totalMt93 = parseInt(input);
+                    localStorage.setItem('totalMt93', totalMt93);
+                    updateInventoryStats();
+                    showToast(`Đã cập nhật tổng máy MT93 thành ${totalMt93}`);
+                }
+            } else if (type === 'mt90') {
+                const input = prompt("Nhập TỔNG SỐ LƯỢNG máy MT90 (Máy cũ):", totalMt90);
+                if (input !== null && !isNaN(input) && parseInt(input) > 0) {
+                    totalMt90 = parseInt(input);
+                    localStorage.setItem('totalMt90', totalMt90);
+                    updateInventoryStats();
+                    showToast(`Đã cập nhật tổng máy MT90 thành ${totalMt90}`);
+                }
+            }
+        };
+
+        function updateInventoryStats() {
+            document.getElementById('mt93TotalText').innerText = totalMt93;
+            document.getElementById('mt90TotalText').innerText = totalMt90;
+
+            let borrowedMt93 = 0;
+            let borrowedMt90 = 0;
+
+            unreturnedCache.forEach(item => {
+                const devType = detectDeviceType(item.pdaCode);
+                if (devType === 'Máy mới') borrowedMt93++;
+                else if (devType === 'Máy cũ') borrowedMt90++;
+            });
+
+            const availMt93 = Math.max(0, totalMt93 - borrowedMt93);
+            const availMt90 = Math.max(0, totalMt90 - borrowedMt90);
+
+            document.getElementById('mt93AvailableText').innerText = availMt93;
+            document.getElementById('mt90AvailableText').innerText = availMt90;
+
+            const pctMt93 = totalMt93 > 0 ? (availMt93 / totalMt93) * 100 : 0;
+            const pctMt90 = totalMt90 > 0 ? (availMt90 / totalMt90) * 100 : 0;
+
+            document.getElementById('mt93ProgressBar').style.width = `${pctMt93}%`;
+            document.getElementById('mt90ProgressBar').style.width = `${pctMt90}%`;
+        }
+
         function setupVietnameseDetector(inputElement) {
             let isComposing = false;
 
@@ -686,6 +752,7 @@
                 const el = document.getElementById(id);
                 if (el) setupVietnameseDetector(el);
             });
+            updateInventoryStats();
         });
 
         async function checkUserPermissions(email) {
@@ -875,6 +942,11 @@
             return isNaN(t) ? (timeSec ? timeSec * 1000 : 0) : t;
         }
 
+        function cleanOptionString(str) {
+            if (!str) return '';
+            return str.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
+        }
+
         window.addEventListener('load', () => {
             const { collection, onSnapshot } = window.fs;
             const db = window.db;
@@ -884,6 +956,7 @@
                 snapshot.forEach(doc => unreturnedCache.push({ id: doc.id, ...doc.data() }));
                 renderUnreturned(unreturnedCache);
                 renderPivotTable(unreturnedCache);
+                updateInventoryStats();
             });
 
             onSnapshot(collection(db, "logs"), (snapshot) => {
@@ -918,22 +991,50 @@
         });
 
         function updateDropdownOptions(emps) {
-            const teamSet = new Set(["Admin", "ASM", "Cache", "GTC", "Inbound", "Manual", "OB North B1", "OB North B2", "OB Xmetro", "TBS", "Ops Support"]);
-            const supSet = new Set(["Mgr. Phạm Tiến", "Sup Xuân Huy", "Sup Tuấn Anh", "Sup Anh Sơn", "AM Hồng Đăng"]);
+            const rawTeamList = ["Admin", "ASM", "Cache", "GTC", "Inbound", "Manual", "OB North B1", "OB North B2", "OB Xmetro", "TBS", "Ops Support"];
+            const rawSupList = ["Mgr. Phạm Tiến", "Sup Xuân Huy", "Sup Tuấn Anh", "Sup Anh Sơn", "AM Hồng Đăng"];
+
+            const teamSet = new Set(rawTeamList.map(cleanOptionString));
+            const supSet = new Set(rawSupList.map(cleanOptionString));
 
             emps.forEach(e => {
-                if (e.team) teamSet.add(e.team.trim());
-                if (e.supervisor) supSet.add(e.supervisor.trim());
+                if (e.team) {
+                    const cleaned = cleanOptionString(e.team);
+                    if (cleaned) teamSet.add(cleaned);
+                }
+                if (e.supervisor) {
+                    const cleaned = cleanOptionString(e.supervisor);
+                    if (cleaned) supSet.add(cleaned);
+                }
             });
+
+            const sortedTeams = Array.from(teamSet).sort();
+            const sortedSups = Array.from(supSet).sort();
 
             const teamDatalist = document.getElementById('teamOptions');
             if (teamDatalist) {
-                teamDatalist.innerHTML = Array.from(teamSet).map(t => `<option value="${t}">`).join('');
+                teamDatalist.innerHTML = sortedTeams.map(t => `<option value="${t}">`).join('');
             }
 
             const supDatalist = document.getElementById('supOptions');
             if (supDatalist) {
-                supDatalist.innerHTML = Array.from(supSet).map(s => `<option value="${s}">`).join('');
+                supDatalist.innerHTML = sortedSups.map(s => `<option value="${s}">`).join('');
+            }
+
+            const displayTeamSelect = document.getElementById('displayEmpTeam');
+            if (displayTeamSelect) {
+                const currentVal = displayTeamSelect.value;
+                displayTeamSelect.innerHTML = `<option value="">-- Chọn Team --</option>` + 
+                    sortedTeams.map(t => `<option value="${t}">${t}</option>`).join('');
+                displayTeamSelect.value = currentVal;
+            }
+
+            const displaySupSelect = document.getElementById('displayEmpSup');
+            if (displaySupSelect) {
+                const currentVal = displaySupSelect.value;
+                displaySupSelect.innerHTML = `<option value="">-- Chọn Sup --</option>` + 
+                    sortedSups.map(s => `<option value="${s}">${s}</option>`).join('');
+                displaySupSelect.value = currentVal;
             }
         }
 
@@ -941,9 +1042,12 @@
         if (scanEmpInput) {
             const checkAndFillEmployee = async () => {
                 const opsId = scanEmpInput.value.trim();
+                const empTeamSelect = document.getElementById('displayEmpTeam');
+                const empSupSelect = document.getElementById('displayEmpSup');
+
                 if (!opsId) {
-                    document.getElementById('displayEmpTeam').value = '';
-                    document.getElementById('displayEmpSup').value = '';
+                    empTeamSelect.value = '';
+                    empSupSelect.value = '';
                     return;
                 }
 
@@ -958,11 +1062,9 @@
                 }
 
                 const empBox = document.getElementById('selectedEmpBox');
-                const empTeamInput = document.getElementById('displayEmpTeam');
-                const empSupInput = document.getElementById('displayEmpSup');
 
                 if (empData) {
-                    selectedEmployee = empData;
+                    selectedEmployee = { ...empData };
                     empBox.innerHTML = `
                         <div class="flex justify-between items-center w-full">
                             <div>
@@ -972,8 +1074,13 @@
                             <span class="bg-emerald-100 text-emerald-700 font-extrabold px-3 py-1 rounded-lg text-xs">✓ Đã chọn NV</span>
                         </div>
                     `;
-                    empTeamInput.value = empData.team || 'N/A';
-                    empSupInput.value = empData.supervisor || 'N/A';
+
+                    const cleanedTeam = cleanOptionString(empData.team);
+                    const cleanedSup = cleanOptionString(empData.supervisor);
+
+                    if (cleanedTeam) empTeamSelect.value = cleanedTeam;
+                    if (cleanedSup) empSupSelect.value = cleanedSup;
+
                 } else {
                     selectedEmployee = null;
                     empBox.innerHTML = `
@@ -981,8 +1088,8 @@
                             ⚠️ Không tìm thấy Ops ID "${opsId}". Vui lòng kiểm tra lại!
                         </div>
                     `;
-                    empTeamInput.value = '';
-                    empSupInput.value = '';
+                    empTeamSelect.value = '';
+                    empSupSelect.value = '';
                 }
             };
 
@@ -1038,8 +1145,8 @@
                         });
 
                         const empBox = document.getElementById('selectedEmpBox');
-                        const empTeamInput = document.getElementById('displayEmpTeam');
-                        const empSupInput = document.getElementById('displayEmpSup');
+                        const empTeamSelect = document.getElementById('displayEmpTeam');
+                        const empSupSelect = document.getElementById('displayEmpSup');
 
                         if (!selectedEmployee) {
                             empBox.innerHTML = `
@@ -1051,8 +1158,12 @@
                                     <span class="bg-amber-100 text-amber-700 font-extrabold px-3 py-1 rounded-lg text-xs">Auto Người Trả</span>
                                 </div>
                             `;
-                            empTeamInput.value = activeRecord.team || 'N/A';
-                            empSupInput.value = activeRecord.supervisor || 'N/A';
+                            
+                            const cleanedTeam = cleanOptionString(activeRecord.team);
+                            const cleanedSup = cleanOptionString(activeRecord.supervisor);
+
+                            if (cleanedTeam) empTeamSelect.value = cleanedTeam;
+                            if (cleanedSup) empSupSelect.value = cleanedSup;
                         }
 
                         renderPendingList();
@@ -1142,6 +1253,12 @@
             const timeStr = `${nowObj.getHours().toString().padStart(2,'0')}:${nowObj.getMinutes().toString().padStart(2,'0')}:${nowObj.getSeconds().toString().padStart(2,'0')} ${nowObj.getDate().toString().padStart(2,'0')}/${(nowObj.getMonth()+1).toString().padStart(2,'0')}/${nowObj.getFullYear()}`;
             const adminName = currentAdminDisplayName;
 
+            const overrideTeam = document.getElementById('displayEmpTeam').value.trim();
+            const overrideSup = document.getElementById('displayEmpSup').value.trim();
+
+            const finalTeam = overrideTeam || (selectedEmployee ? selectedEmployee.team : '');
+            const finalSup = overrideSup || (selectedEmployee ? selectedEmployee.supervisor : '');
+
             const batch = writeBatch(db);
 
             if (pendingBorrowPdaList.length > 0) {
@@ -1161,8 +1278,8 @@
                         pdaType: pdaType,
                         opsId: selectedEmployee.opsId,
                         empName: selectedEmployee.empName,
-                        team: selectedEmployee.team || '',
-                        supervisor: selectedEmployee.supervisor || '',
+                        team: finalTeam,
+                        supervisor: finalSup,
                         borrowTime: timeStr,
                         createdAt: serverTimestamp(),
                         adminName: adminName
@@ -1177,7 +1294,7 @@
                         status: "MƯỢN",
                         opsId: selectedEmployee.opsId,
                         empName: selectedEmployee.empName,
-                        details: `Mượn máy trực tiếp`,
+                        details: `Mượn máy trực tiếp (${finalTeam} / ${finalSup})`,
                         adminName: adminName
                     });
                 }
@@ -1600,8 +1717,8 @@
             document.getElementById('empOpsId').value = opsId;
             document.getElementById('empName').value = name;
             document.getElementById('empEmail').value = email;
-            document.getElementById('empTeam').value = team;
-            document.getElementById('empSup').value = sup;
+            document.getElementById('empTeam').value = cleanOptionString(team);
+            document.getElementById('empSup').value = cleanOptionString(sup);
             
             document.getElementById('empForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
             document.getElementById('empTeam').focus();
@@ -1617,8 +1734,8 @@
             const opsId = document.getElementById('empOpsId').value.trim();
             const empName = document.getElementById('empName').value.trim();
             const email = document.getElementById('empEmail').value.trim();
-            const team = document.getElementById('empTeam').value.trim();
-            const supervisor = document.getElementById('empSup').value.trim();
+            const team = cleanOptionString(document.getElementById('empTeam').value);
+            const supervisor = cleanOptionString(document.getElementById('empSup').value);
 
             try {
                 const q = query(collection(db, "employees"), where("opsId", "==", opsId));
@@ -1654,8 +1771,8 @@
                         opsId: String(item.opsId).trim(),
                         empName: String(item.empName).trim(),
                         email: String(item.email || '').trim(),
-                        team: String(item.team || '').trim(),
-                        supervisor: String(item.supervisor || '').trim()
+                        team: cleanOptionString(item.team),
+                        supervisor: cleanOptionString(item.supervisor)
                     });
                     count++;
 
