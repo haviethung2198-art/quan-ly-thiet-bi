@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <!-- Firebase SDK v9 (Thêm Firebase Auth) -->
+    <!-- Firebase SDK v9 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getFirestore, collection, onSnapshot, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
@@ -132,7 +132,7 @@
             </div>
             <div class="text-right text-gray-600">
                 <span id="currentDay" class="font-semibold mr-2">Thứ tư – Ngày 05/08/2026</span>
-                <span id="currentTime" class="font-bold text-orange-600 text-base">14:00:00</span>
+                <span id="currentTime" class="font-bold text-orange-600 text-base">14:45:00</span>
             </div>
         </header>
 
@@ -482,7 +482,7 @@
                 await signInWithPopup(auth, provider);
             } catch (err) {
                 console.error("Lỗi đăng nhập:", err);
-                alert("❌ Đăng nhập không thành công. Vui lòng thử lại!");
+                alert(`❌ Đăng nhập không thành công!\nChi tiết lỗi: ${err.code || err.message}`);
             }
         };
 
@@ -506,17 +506,15 @@
 
         // HÀM KIỂM TRA PHÂN QUYỀN
         async function checkUserPermissions(email) {
-            const { collection, getDocs, query, where } = window.fs;
+            const { collection, getDocs } = window.fs;
             const db = window.db;
 
-            // Mặc định Super Admin khởi tạo ban đầu (Email của bạn có thể đặt ở đây hoặc tự động nhận bản ghi đầu tiên)
             const lowerEmail = email.toLowerCase();
 
             const snap = await getDocs(collection(db, "admin_users"));
             adminUsersCache = [];
             snap.forEach(doc => adminUsersCache.push({ id: doc.id, ...doc.data() }));
 
-            // Tự động khởi tạo Super Admin nếu Database trống
             if (adminUsersCache.length === 0) {
                 const { addDoc } = window.fs;
                 const defaultSuper = { email: lowerEmail, displayName: "HÀ VIỆT HÙNG", isSuper: true };
@@ -532,7 +530,7 @@
             const userRoleBadge = document.getElementById('userRoleBadge');
 
             if (matchedUser) {
-                currentAdminDisplayName = matchedUser.displayName || user.displayName || lowerEmail;
+                currentAdminDisplayName = matchedUser.displayName || currentUser.displayName || lowerEmail;
                 currentAdminNameEl.innerText = currentAdminDisplayName;
 
                 if (matchedUser.isSuper === true || matchedUser.isSuper === "true") {
@@ -550,9 +548,8 @@
                 readOnlyWarning.classList.add('hidden');
                 setFormControlsState(true);
             } else {
-                // TÀI KHOẢN KHÁCH KHÔNG CÓ TRONG WHITELIST
                 currentUserRole = 'guest';
-                currentAdminDisplayName = user.displayName || lowerEmail;
+                currentAdminDisplayName = currentUser.displayName || lowerEmail;
                 currentAdminNameEl.innerText = currentAdminDisplayName;
                 navAdminBtn.classList.add('hidden');
 
@@ -564,9 +561,11 @@
             }
 
             renderAdminUsers(adminUsersCache);
+            // RE-RENDER ĐỂ CẬP NHẬT TRẠNG THÁI NÚT VÀO THỜI ĐIỂM HOÀN TẤT XÁC THỰC
+            renderUnreturned(unreturnedCache);
+            renderEmployees(employeeCache);
         }
 
-        // BẬT / TẮT NÚT THAO TÁC THEO PHÂN QUYỀN
         function setFormControlsState(enabled) {
             const btnConfirm = document.getElementById('btnConfirm');
             const btnSaveEmp = document.getElementById('btnSaveEmp');
@@ -581,7 +580,6 @@
             if (excelFileInput) excelFileInput.disabled = !enabled;
         }
 
-        // QUẢN LÝ THÊM/XÓA ADMIN (CHỈ SUPER ADMIN)
         window.saveAdminUser = async function(e) {
             e.preventDefault();
             if (currentUserRole !== 'superadmin') return;
@@ -635,7 +633,6 @@
             }
         };
 
-        // CHUYỂN TAB
         window.switchTab = function(tabName) {
             if (tabName === 'admin' && currentUserRole !== 'superadmin') {
                 alert("⚠️ Bạn không có quyền truy cập vào khu vực Bảo Mật!");
@@ -651,7 +648,6 @@
             document.getElementById(`nav-${tabName}`).className = "w-full flex items-center gap-3 px-3 py-3 rounded-lg font-semibold bg-orange-500 text-white transition-all";
         };
 
-        // NHẬN DIỆN MÃ THIẾT BỊ
         function detectDeviceType(code) {
             if (!code) return 'Máy mới';
             const upperCode = String(code).toUpperCase().trim();
@@ -920,7 +916,6 @@
             renderPendingList();
         };
 
-        // XỬ LÝ LƯU CẤP / TRẢ
         window.processBatchTransaction = async function() {
             if (currentUserRole === 'guest') {
                 alert("🔒 Tài khoản của bạn chưa được cấp quyền thao tác!");
@@ -938,7 +933,6 @@
             const nowObj = new Date();
             const timeStr = `${nowObj.getHours().toString().padStart(2,'0')}:${nowObj.getMinutes().toString().padStart(2,'0')}:${nowObj.getSeconds().toString().padStart(2,'0')} ${nowObj.getDate().toString().padStart(2,'0')}/${(nowObj.getMonth()+1).toString().padStart(2,'0')}/${nowObj.getFullYear()}`;
             
-            // ADMIN NAME LẤY TỰ ĐỘNG THEO TÀI KHOẢN ĐĂNG NHẬP
             const adminName = currentAdminDisplayName;
 
             if (pendingBorrowPdaList.length > 0) {
@@ -1126,6 +1120,7 @@
             document.getElementById('modalEmpName').innerText = sample.empName;
             document.getElementById('modalEmpSub').innerText = `Ops ID: ${sample.opsId} | Team: ${sample.team || 'N/A'} | Sup: ${sample.supervisor || 'N/A'}`;
 
+            const isDisabled = currentUserRole === 'guest';
             const listContainer = document.getElementById('modalPdaList');
             listContainer.innerHTML = empItems.map(item => {
                 const devType = detectDeviceType(item.pdaCode);
@@ -1136,7 +1131,7 @@
                             <span class="ml-2">${renderDeviceBadge(devType)}</span>
                             <p class="text-[11px] text-gray-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>Mượn lúc: ${item.borrowTime}</p>
                         </div>
-                        <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${currentUserRole === 'guest' ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow transition-all disabled:opacity-50">
+                        <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${isDisabled ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow transition-all disabled:opacity-50">
                             Nhận Trả
                         </button>
                     </div>
@@ -1150,14 +1145,17 @@
             document.getElementById('empDetailsModal').classList.add('hidden');
         };
 
+        // HIỂN THỊ CÁC BẢNG UNRETURNED
         function renderUnreturned(list) {
             const fullTbody = document.getElementById('unreturnedFullTable');
             const miniTbody = document.getElementById('unreturnedMiniTable');
 
+            const isDisabled = currentUserRole === 'guest';
+
             fullTbody.innerHTML = list.map(item => {
                 const devType = detectDeviceType(item.pdaCode);
                 return `
-                    <tr class="hover:bg-orange-50/40">
+                    <tr class="hover:bg-orange-50/40 border-b border-gray-100">
                         <td class="p-3 font-bold text-orange-600">${item.pdaCode}</td>
                         <td class="p-3">${renderDeviceBadge(devType)}</td>
                         <td class="p-3 font-semibold">${item.opsId}</td>
@@ -1167,7 +1165,7 @@
                         <td class="p-3">${item.borrowTime}</td>
                         <td class="p-3">${item.adminName}</td>
                         <td class="p-3 text-center">
-                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${currentUserRole === 'guest' ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded font-bold text-xs shadow-sm disabled:opacity-50">
+                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${isDisabled ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm disabled:opacity-50 transition-all">
                                 Nhận Trả
                             </button>
                         </td>
@@ -1185,7 +1183,7 @@
                         <td class="p-2.5">${item.team} - ${item.supervisor}</td>
                         <td class="p-2.5">${item.borrowTime}</td>
                         <td class="p-2.5 text-right">
-                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${currentUserRole === 'guest' ? 'disabled' : ''} class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded font-bold hover:bg-amber-200 disabled:opacity-50">Nhận Trả</button>
+                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${isDisabled ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded-lg font-bold text-xs shadow-sm disabled:opacity-50 transition-all">Nhận Trả</button>
                         </td>
                     </tr>
                 `;
@@ -1221,10 +1219,12 @@
                 return;
             }
 
+            const isDisabled = currentUserRole === 'guest';
+
             tbody.innerHTML = emps.map(emp => `
                 <tr class="hover:bg-orange-50/30 border-b border-gray-100 transition-all">
                     <td class="p-3 text-center">
-                        <input type="checkbox" value="${emp.id}" class="emp-checkbox w-4 h-4 rounded cursor-pointer accent-orange-600" ${currentUserRole === 'guest' ? 'disabled' : ''}>
+                        <input type="checkbox" value="${emp.id}" class="emp-checkbox w-4 h-4 rounded cursor-pointer accent-orange-600" ${isDisabled ? 'disabled' : ''}>
                     </td>
                     <td class="p-3 font-bold text-orange-600">${emp.opsId}</td>
                     <td class="p-3 font-bold text-gray-800">${emp.empName}</td>
@@ -1232,8 +1232,8 @@
                     <td class="p-3 font-semibold"><span class="bg-gray-100 text-gray-700 px-2 py-1 rounded">${emp.team || 'N/A'}</span></td>
                     <td class="p-3 font-semibold text-gray-700">${emp.supervisor || 'N/A'}</td>
                     <td class="p-3 text-center">
-                        <button onclick="editEmployee('${emp.opsId}', '${emp.empName}', '${emp.email || ''}', '${emp.team || ''}', '${emp.supervisor || ''}')" ${currentUserRole === 'guest' ? 'disabled' : ''} class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded font-bold text-xs mr-1 transition-all disabled:opacity-50">Sửa</button>
-                        <button onclick="deleteSingleEmployee('${emp.id}', '${emp.empName}')" ${currentUserRole === 'guest' ? 'disabled' : ''} class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1 rounded font-bold text-xs transition-all disabled:opacity-50">Xóa</button>
+                        <button onclick="editEmployee('${emp.opsId}', '${emp.empName}', '${emp.email || ''}', '${emp.team || ''}', '${emp.supervisor || ''}')" ${isDisabled ? 'disabled' : ''} class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded font-bold text-xs mr-1 transition-all disabled:opacity-50">Sửa</button>
+                        <button onclick="deleteSingleEmployee('${emp.id}', '${emp.empName}')" ${isDisabled ? 'disabled' : ''} class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1 rounded font-bold text-xs transition-all disabled:opacity-50">Xóa</button>
                     </td>
                 </tr>
             `).join('');
