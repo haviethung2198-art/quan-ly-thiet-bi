@@ -47,7 +47,7 @@
         .fa, .fas, .far, .fal, .fad, .fab, .fa-solid, .fa-regular, .fa-brands {
             font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
         }
-        .radar-box { position: relative; width: 70px; height: 70px; border-radius: 50%; background: rgba(255,247,237,0.8); display: flex; align-items: center; justify-content: center; }
+        .radar-box { position: relative; width: 65px; height: 65px; border-radius: 50%; background: rgba(255,247,237,0.8); display: flex; align-items: center; justify-content: center; }
         .radar-circle { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px solid rgba(249,115,22,0.4); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(1.4); opacity: 0; } }
     </style>
@@ -132,7 +132,7 @@
             </div>
             <div class="text-right text-gray-600">
                 <span id="currentDay" class="font-semibold mr-2">Thứ tư – Ngày 05/08/2026</span>
-                <span id="currentTime" class="font-bold text-orange-600 text-base">14:50:00</span>
+                <span id="currentTime" class="font-bold text-orange-600 text-base">15:14:00</span>
             </div>
         </header>
 
@@ -142,36 +142,39 @@
                 <span><i class="fa-solid fa-lock mr-2"></i> Tài khoản Google của bạn chưa được phân quyền thực hiện. Các chức năng Thêm/Sửa/Xóa/Cấp phát đã bị khóa!</span>
             </div>
 
-            <!-- TAB 1: CẤP PHÁT MÁY (DASHBOARD) -->
-            <div id="tab-dashboard" class="tab-content space-y-4">
-                <div class="grid grid-cols-12 gap-4">
-                    <div class="col-span-12 lg:col-span-3 bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-3">
+            <!-- TAB 1: CẤP PHÁT MÁY (DASHBOARD - THIẾT KẾ MỚI TỈ LỆ 20% - 40% - 40%) -->
+            <div id="tab-dashboard" class="tab-content space-y-6">
+                <div class="grid grid-cols-10 gap-4 items-stretch">
+                    
+                    <!-- 1. TRẠNG THÁI KHO (CHẾ BẢO 20% = 2/10 CỘT) -->
+                    <div class="col-span-12 lg:col-span-2 bg-white rounded-xl p-4 shadow-sm border border-gray-200 flex flex-col justify-between">
                         <div class="flex justify-between items-center border-b pb-2">
-                            <span class="font-bold text-gray-700 uppercase">Trạng Thái Kho</span>
-                            <span class="bg-orange-100 text-orange-600 font-bold px-2 py-0.5 rounded-full text-xs">Realtime</span>
+                            <span class="font-bold text-gray-700 uppercase text-xs">Trạng Thái Kho</span>
+                            <span class="bg-orange-100 text-orange-600 font-bold px-2 py-0.5 rounded-full text-[10px]">Realtime</span>
                         </div>
-                        <div>
-                            <div class="flex justify-between font-bold"><span>MT93 (Máy mới)</span><span>Còn: 4/54</span></div>
-                            <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden mt-1"><div class="bg-red-500 h-full w-[93%]"></div></div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between font-bold text-xs"><span>MT93 (Máy mới)</span><span>Còn: 4/54</span></div>
+                            <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden"><div class="bg-red-500 h-full w-[93%]"></div></div>
                         </div>
-                        <div class="flex justify-center py-1">
+                        <div class="flex justify-center py-2">
                             <div class="radar-box"><div class="radar-circle"></div><i class="fa-solid fa-wifi text-orange-500 text-lg"></i></div>
                         </div>
-                        <div>
-                            <div class="flex justify-between font-bold"><span>MT90 (Máy cũ)</span><span>Còn: 19/23</span></div>
-                            <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden mt-1"><div class="bg-blue-500 h-full w-[17%]"></div></div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between font-bold text-xs"><span>MT90 (Máy cũ)</span><span>Còn: 19/23</span></div>
+                            <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden"><div class="bg-blue-500 h-full w-[17%]"></div></div>
                         </div>
                     </div>
 
-                    <div class="col-span-12 lg:col-span-4 bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-3">
-                        <div class="flex items-center gap-2">
+                    <!-- 2. OPS ID NHÂN VIÊN (CHẾ BẢO 40% = 4/10 CỘT) -->
+                    <div class="col-span-12 lg:col-span-4 bg-white rounded-xl p-4 shadow-sm border border-gray-200 flex flex-col justify-between space-y-3">
+                        <div class="flex items-center gap-2 border-b pb-2">
                             <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">1</span>
-                            <h2 class="font-bold uppercase">OPS ID NHÂN VIÊN (MƯỢN / TRẢ HỘ)</h2>
+                            <h2 class="font-bold uppercase text-xs text-gray-800">OPS ID NHÂN VIÊN (MƯỢN / TRẢ HỘ)</h2>
                         </div>
                         <div class="flex gap-2">
-                            <input type="text" id="scanEmpInput" autofocus placeholder="Quét mã NV (Mượn máy hoặc Trả hộ)..." class="flex-1 p-2.5 border border-orange-400 rounded-lg focus:border-orange-600 outline-none text-sm font-semibold text-gray-800">
+                            <input type="text" id="scanEmpInput" autofocus placeholder="Quét mã NV (Dùng khi Mượn hoặc Trả hộ)..." class="flex-1 p-2.5 border border-orange-400 rounded-lg focus:border-orange-600 outline-none text-sm font-semibold text-gray-800">
                         </div>
-                        <div id="selectedEmpBox" class="border border-orange-200 rounded-lg p-3 bg-orange-50/30">
+                        <div id="selectedEmpBox" class="border border-orange-200 rounded-lg p-3 bg-orange-50/30 flex-1 flex items-center justify-center min-h-[50px]">
                             <p class="text-gray-400 text-xs">Chưa quét thông tin nhân viên</p>
                         </div>
 
@@ -187,17 +190,21 @@
                         </div>
                     </div>
 
-                    <div class="col-span-12 lg:col-span-5 bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-3">
-                        <div class="flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">2</span><h2 class="font-bold uppercase">Quét Nhiều PDA Cùng Lúc</h2></div>
+                    <!-- 3. QUÉT NHIỀU PDA CÙNG LÚC (CHẾ BẢO 40% = 4/10 CỘT) -->
+                    <div class="col-span-12 lg:col-span-4 bg-white rounded-xl p-4 shadow-sm border border-gray-200 flex flex-col justify-between space-y-3">
+                        <div class="flex items-center gap-2 border-b pb-2">
+                            <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">2</span>
+                            <h2 class="font-bold uppercase text-xs text-gray-800">Quét Nhiều PDA Cùng Lúc</h2>
+                        </div>
                         
                         <div class="grid grid-cols-2 gap-3">
-                            <div class="border-2 border-emerald-400 border-dashed rounded-lg p-2.5 bg-emerald-50/20">
-                                <span class="font-bold text-emerald-700 block mb-1">MƯỢN NHIỀU MÁY</span>
-                                <input type="text" id="borrowPdaInput" placeholder="Quét mã PDA mượn..." class="w-full p-2 border rounded bg-white outline-none font-bold">
+                            <div class="border-2 border-emerald-400 border-dashed rounded-lg p-2 bg-emerald-50/20">
+                                <span class="font-bold text-emerald-700 block mb-1 text-xs">MƯỢN NHIỀU MÁY</span>
+                                <input type="text" id="borrowPdaInput" placeholder="Quét mã PDA mượn..." class="w-full p-2 border rounded bg-white outline-none font-bold text-xs">
                             </div>
-                            <div class="border-2 border-amber-300 border-dashed rounded-lg p-2.5 bg-amber-50/20">
-                                <span class="font-bold text-amber-700 block mb-1">TRẢ NHIỀU MÁY</span>
-                                <input type="text" id="returnPdaInput" placeholder="Quét mã PDA trả..." class="w-full p-2 border rounded bg-white outline-none font-bold">
+                            <div class="border-2 border-amber-300 border-dashed rounded-lg p-2 bg-amber-50/20">
+                                <span class="font-bold text-amber-700 block mb-1 text-xs">TRẢ NHIỀU MÁY</span>
+                                <input type="text" id="returnPdaInput" placeholder="Quét mã PDA trả..." class="w-full p-2 border rounded bg-white outline-none font-bold text-xs">
                             </div>
                         </div>
 
@@ -206,7 +213,7 @@
                                 <span>Danh sách PDA vừa quét (<span id="pendingCount">0</span>):</span>
                                 <button onclick="clearPendingList()" class="text-red-500 hover:underline">Xóa tất cả</button>
                             </div>
-                            <div id="pendingPdaList" class="flex flex-col gap-1.5 min-h-[40px] max-h-[100px] overflow-y-auto p-2 border rounded-lg bg-gray-50">
+                            <div id="pendingPdaList" class="flex flex-col gap-1.5 min-h-[45px] max-h-[90px] overflow-y-auto p-2 border rounded-lg bg-gray-50">
                                 <span class="text-gray-400 text-xs italic">Chưa quét mã PDA nào...</span>
                             </div>
                         </div>
@@ -217,12 +224,27 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                    <h3 class="font-bold text-gray-700 uppercase mb-3">PDA Chưa Trả Realtime Tracker</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-50 border-b text-gray-500 font-semibold">
-                                <tr><th class="p-2.5">MÃ PDA</th><th class="p-2.5">LOẠI</th><th class="p-2.5">NGƯỜI MƯỢN</th><th class="p-2.5">TEAM/SUP</th><th class="p-2.5">THỜI GIAN</th><th class="p-2.5 text-right">THAO TÁC</th></tr>
+                <!-- 4. KHU VỰC REALTIME TRACKER (HẠ THẤP XUỐNG & CHO PHÉP CUỘN TOÀN BỘ DANH SÁCH) -->
+                <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 mt-2">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b">
+                        <h3 class="font-bold text-gray-700 uppercase flex items-center gap-2">
+                            <i class="fa-solid fa-list-ul text-orange-500"></i> PDA Chưa Trả Realtime Tracker
+                        </h3>
+                        <span class="text-xs font-semibold text-gray-400">Tự động cập nhật tức thì</span>
+                    </div>
+                    
+                    <!-- Khung cuộn với chiều cao tối đa linh hoạt -->
+                    <div class="overflow-x-auto max-h-[380px] overflow-y-auto rounded-lg border border-gray-100">
+                        <table class="w-full text-left border-collapse relative">
+                            <thead class="bg-gray-100 text-gray-600 font-bold text-xs uppercase sticky top-0 z-10 shadow-sm">
+                                <tr>
+                                    <th class="p-3">MÃ PDA</th>
+                                    <th class="p-3">LOẠI</th>
+                                    <th class="p-3">NGƯỜI MƯỢN</th>
+                                    <th class="p-3">TEAM/SUP</th>
+                                    <th class="p-3">THỜI GIAN</th>
+                                    <th class="p-3 text-right">THAO TÁC</th>
+                                </tr>
                             </thead>
                             <tbody id="unreturnedMiniTable" class="divide-y divide-gray-100"></tbody>
                         </table>
@@ -753,7 +775,7 @@
             }
         }
 
-        // AUTO-FILL OPS ID
+        // AUTO-FILL OPS ID KHÔNG BẮT BUỘC KHI TRẢ MÁY
         const scanEmpInput = document.getElementById('scanEmpInput');
         if (scanEmpInput) {
             const checkAndFillEmployee = async () => {
@@ -781,12 +803,12 @@
                 if (empData) {
                     selectedEmployee = empData;
                     empBox.innerHTML = `
-                        <div class="flex justify-between items-center">
+                        <div class="flex justify-between items-center w-full">
                             <div>
                                 <p class="font-bold text-gray-800 text-sm">${empData.empName}</p>
                                 <p class="text-gray-500 font-bold text-xs">Mã NV: <span class="text-orange-600 font-bold">${empData.opsId}</span></p>
                             </div>
-                            <span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded text-xs">✓ Đã quét NV</span>
+                            <span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded text-xs">✓ Đã chọn NV</span>
                         </div>
                     `;
                     empTeamInput.value = empData.team || 'N/A';
@@ -833,7 +855,7 @@
             });
         }
 
-        // TRẢ MÁY
+        // TRẢ MÁY - TỰ ĐỘNG HIỆN THÔNG TIN NGƯỜI TRẢ MÀ KHÔNG CẦN NHẬP TAY
         const returnPdaInput = document.getElementById('returnPdaInput');
         if (returnPdaInput) {
             returnPdaInput.addEventListener('keypress', async (e) => {
@@ -855,6 +877,25 @@
                             code: activeRecord.pdaCode,
                             originalData: activeRecord
                         });
+
+                        const empBox = document.getElementById('selectedEmpBox');
+                        const empTeamInput = document.getElementById('displayEmpTeam');
+                        const empSupInput = document.getElementById('displayEmpSup');
+
+                        if (!selectedEmployee) {
+                            empBox.innerHTML = `
+                                <div class="flex justify-between items-center w-full">
+                                    <div>
+                                        <p class="font-bold text-amber-800 text-sm"><i class="fa-solid fa-arrow-rotate-left mr-1"></i> ${activeRecord.empName}</p>
+                                        <p class="text-gray-500 font-bold text-xs">Mã NV: <span class="text-orange-600 font-bold">${activeRecord.opsId}</span></p>
+                                    </div>
+                                    <span class="bg-amber-100 text-amber-700 font-bold px-2 py-1 rounded text-xs">Auto Người Trả</span>
+                                </div>
+                            `;
+                            empTeamInput.value = activeRecord.team || 'N/A';
+                            empSupInput.value = activeRecord.supervisor || 'N/A';
+                        }
+
                         renderPendingList();
                     }
                     returnPdaInput.value = '';
@@ -884,7 +925,7 @@
             });
 
             pendingReturnPdaList.forEach((item, index) => {
-                let extraInfo = `(Đang mượn bởi: ${item.originalData.empName} - ${item.originalData.opsId})`;
+                let extraInfo = `Người trả: <b class="text-amber-900">${item.originalData.empName} (${item.originalData.opsId})</b>`;
                 if (selectedEmployee && selectedEmployee.opsId.toLowerCase() !== item.originalData.opsId.toLowerCase()) {
                     extraInfo = `<span class="text-red-600 font-bold">[TRẢ HỘ]</span> bởi ${selectedEmployee.empName} ➔ cho ${item.originalData.empName}`;
                 }
@@ -915,7 +956,7 @@
             renderPendingList();
         };
 
-        // TỐI ƯU HÓA BATCH GHI NHẬN TỨC THÌ (BATCH TRANSACTION)
+        // TỐI ƯU HÓA BATCH GHI NHẬN TỨC THÌ (WRITEBATCH)
         window.processBatchTransaction = async function() {
             if (currentUserRole === 'guest') {
                 alert("🔒 Tài khoản của bạn chưa được cấp quyền thao tác!");
@@ -928,13 +969,13 @@
             }
 
             if (pendingBorrowPdaList.length > 0 && !selectedEmployee) {
-                alert("⚠️ Vui lòng quét Ops ID nhân viên mượn máy trước!");
+                alert("⚠️ Vui lòng quét Ops ID nhân viên mượn máy trước khi cấp!");
                 return;
             }
 
             const btnConfirm = document.getElementById('btnConfirm');
             btnConfirm.disabled = true;
-            btnConfirm.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang ghi nhận tức thì...`;
+            btnConfirm.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang ghi nhận...`;
 
             const { collection, writeBatch, doc, query, where, getDocs, serverTimestamp } = window.fs;
             const db = window.db;
@@ -945,7 +986,7 @@
 
             const batch = writeBatch(db);
 
-            // 1. Lọc và chuẩn bị dữ liệu mượn máy
+            // 1. Chuẩn bị dữ liệu mượn máy
             if (pendingBorrowPdaList.length > 0) {
                 for (const borrowPda of pendingBorrowPdaList) {
                     const qCheck = query(collection(db, "unreturned"), where("pdaCode", "==", borrowPda));
@@ -957,7 +998,6 @@
 
                     const pdaType = detectDeviceType(borrowPda);
 
-                    // Thêm bản ghi Unreturned vào Batch
                     const unreturnedRef = doc(collection(db, "unreturned"));
                     batch.set(unreturnedRef, {
                         pdaCode: borrowPda,
@@ -971,7 +1011,6 @@
                         adminName: adminName
                     });
 
-                    // Thêm bản ghi Logs vào Batch
                     const logRef = doc(collection(db, "logs"));
                     batch.set(logRef, {
                         timestamp: timeStr,
@@ -987,7 +1026,7 @@
                 }
             }
 
-            // 2. Lọc và chuẩn bị dữ liệu trả máy
+            // 2. Chuẩn bị dữ liệu trả máy
             if (pendingReturnPdaList.length > 0) {
                 for (const item of pendingReturnPdaList) {
                     const returnPda = item.code;
@@ -998,7 +1037,6 @@
 
                     if (!snapshot.empty) {
                         const unreturnedDocId = snapshot.docs[0].id;
-                        // Xóa khỏi danh sách chưa trả
                         batch.delete(doc(db, "unreturned", unreturnedDocId));
 
                         let logOpsId = orig.opsId;
@@ -1013,7 +1051,6 @@
 
                         const pdaType = detectDeviceType(returnPda);
 
-                        // Thêm bản ghi Logs Trả vào Batch
                         const logRef = doc(collection(db, "logs"));
                         batch.set(logRef, {
                             timestamp: timeStr,
@@ -1031,7 +1068,6 @@
             }
 
             try {
-                // THỰC THI GHI DỮ LIỆU TẤT CẢ TRONG 1 LẦN GỌI DUY NHẤT (TỨC THÌ)
                 await batch.commit();
 
                 clearPendingList();
@@ -1044,7 +1080,7 @@
                 document.getElementById('selectedEmpBox').innerHTML = `<p class="text-gray-400 text-xs">Chưa quét thông tin nhân viên</p>`;
                 scanEmpInput.focus();
 
-                alert("⚡ Đã ghi nhận thành công tức thì tất cả thao tác mượn/trả!");
+                alert("⚡ Đã ghi nhận thành công tất cả thao tác mượn/trả!");
             } catch (err) {
                 console.error("Lỗi khi ghi nhận batch: ", err);
                 alert("❌ Có lỗi xảy ra khi lưu dữ liệu hàng loạt!");
@@ -1197,17 +1233,17 @@
                 `;
             }).join('');
 
-            miniTbody.innerHTML = list.slice(0, 5).map(item => {
+            miniTbody.innerHTML = list.map(item => {
                 const devType = detectDeviceType(item.pdaCode);
                 return `
-                    <tr>
-                        <td class="p-2.5 font-bold text-orange-600">${item.pdaCode}</td>
-                        <td class="p-2.5">${renderDeviceBadge(devType)}</td>
-                        <td class="p-2.5 font-bold">${item.empName} <span class="text-gray-400 font-normal">(${item.opsId})</span></td>
-                        <td class="p-2.5">${item.team} - ${item.supervisor}</td>
-                        <td class="p-2.5">${item.borrowTime}</td>
-                        <td class="p-2.5 text-right">
-                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${isDisabled ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded-lg font-bold text-xs shadow-sm disabled:opacity-50 transition-all">Nhận Trả</button>
+                    <tr class="hover:bg-gray-50/80 border-b border-gray-100 transition-all">
+                        <td class="p-3 font-bold text-orange-600">${item.pdaCode}</td>
+                        <td class="p-3">${renderDeviceBadge(devType)}</td>
+                        <td class="p-3 font-bold text-gray-800">${item.empName} <span class="text-gray-400 font-medium text-xs">(${item.opsId})</span></td>
+                        <td class="p-3 text-gray-600 font-medium">${item.team} - ${item.supervisor}</td>
+                        <td class="p-3 text-gray-500 text-xs">${item.borrowTime}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${isDisabled ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm disabled:opacity-50 transition-all">Nhận Trả</button>
                         </td>
                     </tr>
                 `;
