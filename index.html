@@ -11,14 +11,13 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Thư viện đọc file Excel (SheetJS) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <!-- Firebase SDK v9 -->
+    <!-- Firebase SDK v9 (Thêm Firebase Auth) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getFirestore, collection, onSnapshot, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBWhqoCmf75jljLewbh6h-4aQEBPIydgYE",
@@ -31,28 +30,47 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
 
         window.db = db;
+        window.auth = auth;
+        window.googleProvider = googleProvider;
+        window.authMethods = { signInWithPopup, signOut, onAuthStateChanged };
         window.fs = { collection, onSnapshot, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, serverTimestamp };
     </script>
 
     <style>
-        /* Áp dụng font Plus Jakarta Sans nhưng ngoại trừ các icon FontAwesome */
         body, input, button, select, textarea, table, th, td, h1, h2, h3, h4, p, span, div {
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
-        
-        /* Bảo vệ FontAwesome không bị ghi đè font */
         .fa, .fas, .far, .fal, .fad, .fab, .fa-solid, .fa-regular, .fa-brands {
             font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
         }
-
         .radar-box { position: relative; width: 70px; height: 70px; border-radius: 50%; background: rgba(255,247,237,0.8); display: flex; align-items: center; justify-content: center; }
         .radar-circle { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px solid rgba(249,115,22,0.4); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(1.4); opacity: 0; } }
     </style>
 </head>
 <body class="bg-[#f4f6f8] text-gray-800 text-sm flex h-screen overflow-hidden">
+
+    <!-- MODAL BẮT BUỘC ĐĂNG NHẬP GOOGLE -->
+    <div id="loginOverlay" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center space-y-6 border border-gray-100">
+            <div class="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-extrabold text-gray-800">HỆ THỐNG QUẢN LÝ CẤP PHÁT</h2>
+                <p class="text-xs text-orange-600 font-bold mt-1">BN B Mega SOC</p>
+                <p class="text-xs text-gray-500 mt-2">Vui lòng đăng nhập bằng tài khoản Google để xác thực quyền truy cập vào hệ thống.</p>
+            </div>
+            <button onclick="loginWithGoogle()" class="w-full bg-white hover:bg-gray-50 text-gray-700 font-bold py-3 px-4 border border-gray-300 rounded-xl shadow-sm flex items-center justify-center gap-3 transition-all hover:shadow">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
+                <span>Đăng nhập với Google</span>
+            </button>
+        </div>
+    </div>
 
     <!-- 1. SIDEBAR BÊN TRÁI -->
     <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0 shadow-lg">
@@ -82,18 +100,30 @@
                 <button onclick="switchTab('employees')" id="nav-employees" class="w-full flex items-center gap-3 px-3 py-3 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all">
                     <i class="fa-solid fa-users text-base w-5 text-emerald-400"></i> Quản Lý Nhân Viên
                 </button>
+                
+                <!-- TAB BẢO MẬT & ADMIN (CHỈ ADMIN THẤY) -->
+                <button onclick="switchTab('admin')" id="nav-admin" class="hidden w-full flex items-center gap-3 px-3 py-3 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-red-400">
+                    <i class="fa-solid fa-user-shield text-base w-5"></i> Bảo Mật & Quyền Admin
+                </button>
             </nav>
         </div>
 
-        <div class="p-4 border-t border-slate-800 text-xs text-slate-400">
-            <p>Admin: <span class="text-slate-200 font-bold">HÀ VIỆT HÙNG</span></p>
-            <p>Firebase Realtime Syncing Active</p>
+        <div class="p-4 border-t border-slate-800 text-xs text-slate-400 space-y-2">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] text-gray-500 uppercase font-bold">Người Thực Hiện</p>
+                    <p id="currentAdminName" class="text-slate-200 font-bold truncate max-w-[130px]">Đang tải...</p>
+                </div>
+                <button onclick="logout()" class="text-red-400 hover:text-red-300 font-bold text-xs bg-slate-800 p-1.5 rounded-lg border border-slate-700" title="Đăng xuất">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+            <p id="userRoleBadge" class="inline-block bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[10px] font-bold">Role: Loading...</p>
         </div>
     </aside>
 
     <!-- MAIN CONTENT AREA -->
     <div class="flex-1 flex flex-col h-screen overflow-y-auto">
-        
         <header class="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shrink-0">
             <div class="flex items-center gap-3">
                 <span class="text-orange-600 font-bold text-base">BN B Mega SOC</span>
@@ -102,16 +132,19 @@
             </div>
             <div class="text-right text-gray-600">
                 <span id="currentDay" class="font-semibold mr-2">Thứ tư – Ngày 05/08/2026</span>
-                <span id="currentTime" class="font-bold text-orange-600 text-base">13:30:00</span>
+                <span id="currentTime" class="font-bold text-orange-600 text-base">14:00:00</span>
             </div>
         </header>
 
         <div class="p-5 space-y-5 flex-1">
+            <!-- THÔNG BÁO KHÓA CHỨC NĂNG DÀNH CHO KHÁCH -->
+            <div id="readOnlyWarning" class="hidden bg-amber-50 border-l-4 border-amber-500 p-3 rounded-lg text-amber-800 text-xs font-bold flex items-center justify-between">
+                <span><i class="fa-solid fa-lock mr-2"></i> Tài khoản Google của bạn chưa được phân quyền thực hiện. Các chức năng Thêm/Sửa/Xóa/Cấp phát đã bị khóa!</span>
+            </div>
 
             <!-- TAB 1: CẤP PHÁT MÁY (DASHBOARD) -->
             <div id="tab-dashboard" class="tab-content space-y-4">
                 <div class="grid grid-cols-12 gap-4">
-                    <!-- Kho máy -->
                     <div class="col-span-12 lg:col-span-3 bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-3">
                         <div class="flex justify-between items-center border-b pb-2">
                             <span class="font-bold text-gray-700 uppercase">Trạng Thái Kho</span>
@@ -130,7 +163,6 @@
                         </div>
                     </div>
 
-                    <!-- OPS ID & Auto-Fill -->
                     <div class="col-span-12 lg:col-span-4 bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-3">
                         <div class="flex items-center gap-2">
                             <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">1</span>
@@ -139,7 +171,6 @@
                         <div class="flex gap-2">
                             <input type="text" id="scanEmpInput" autofocus placeholder="Quét mã NV (Mượn máy hoặc Trả hộ)..." class="flex-1 p-2.5 border border-orange-400 rounded-lg focus:border-orange-600 outline-none text-sm font-semibold text-gray-800">
                         </div>
-                        
                         <div id="selectedEmpBox" class="border border-orange-200 rounded-lg p-3 bg-orange-50/30">
                             <p class="text-gray-400 text-xs">Chưa quét thông tin nhân viên</p>
                         </div>
@@ -156,7 +187,6 @@
                         </div>
                     </div>
 
-                    <!-- Quét Mượn/Trả PDA Nhiều Thiết Bị -->
                     <div class="col-span-12 lg:col-span-5 bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-3">
                         <div class="flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">2</span><h2 class="font-bold uppercase">Quét Nhiều PDA Cùng Lúc</h2></div>
                         
@@ -181,13 +211,12 @@
                             </div>
                         </div>
 
-                        <button id="btnConfirm" onclick="processBatchTransaction()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg transition-all shadow">
+                        <button id="btnConfirm" onclick="processBatchTransaction()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg transition-all shadow disabled:opacity-50 disabled:cursor-not-allowed">
                             XÁC NHẬN CẤP / TRẢ TẤT CẢ
                         </button>
                     </div>
                 </div>
 
-                <!-- Unreturned Mini Table -->
                 <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                     <h3 class="font-bold text-gray-700 uppercase mb-3">PDA Chưa Trả Realtime Tracker</h3>
                     <div class="overflow-x-auto">
@@ -241,7 +270,6 @@
                             Tổng PDA Chưa Trả: <span id="pivotTotalPdas" class="text-purple-900 text-sm">0</span>
                         </div>
                     </div>
-
                     <div id="pivotContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
             </div>
@@ -282,11 +310,9 @@
                             <p class="text-xs text-emerald-700 mt-0.5">Tải file .xlsx hoặc .csv để thêm dữ liệu vào hệ thống</p>
                         </div>
                     </div>
-
                     <div class="bg-white p-4 rounded-lg border border-emerald-200 md:w-1/2">
                         <label class="block font-bold text-gray-700 mb-1">Chọn file Excel / CSV</label>
-                        <p class="text-xs text-gray-500 mb-3">Hệ thống sẽ tự động nhận diện các cột: <span class="font-semibold text-gray-700">Ops ID, Họ tên, Email, Team, Supervisor</span></p>
-                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200 cursor-pointer">
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200 cursor-pointer disabled:opacity-50">
                     </div>
                 </div>
 
@@ -295,26 +321,28 @@
                     <form id="empForm" onsubmit="saveEmployee(event)" class="grid grid-cols-6 gap-3">
                         <div>
                             <label class="block font-semibold text-gray-600 mb-1">Ops ID / Mã NV</label>
-                            <input type="text" id="empOpsId" required placeholder="Ops5509" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500 bg-orange-50">
+                            <input type="text" id="empOpsId" required placeholder="Ops2120" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500 bg-orange-50 font-bold">
                         </div>
                         <div>
                             <label class="block font-semibold text-gray-600 mb-1">Họ và Tên</label>
-                            <input type="text" id="empName" required placeholder="HÀ VIỆT HÙNG" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500">
+                            <input type="text" id="empName" required placeholder="BÙI VĂN VĨ" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500 font-semibold">
                         </div>
                         <div>
                             <label class="block font-semibold text-gray-600 mb-1">Email</label>
-                            <input type="email" id="empEmail" placeholder="hung.haviet@spxexpress.com" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500">
+                            <input type="email" id="empEmail" placeholder="vi.buivan@spxexpress.com" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500">
                         </div>
                         <div>
                             <label class="block font-semibold text-gray-600 mb-1">Team</label>
-                            <input type="text" id="empTeam" placeholder="Admin..." class="w-full p-2 border rounded-lg outline-none focus:border-orange-500">
+                            <input type="text" id="empTeam" list="teamOptions" placeholder="Chọn / Nhập Team..." class="w-full p-2 border border-orange-300 rounded-lg outline-none focus:border-orange-600 bg-white font-semibold">
+                            <datalist id="teamOptions"></datalist>
                         </div>
                         <div>
                             <label class="block font-semibold text-gray-600 mb-1">Supervisor Direct</label>
-                            <input type="text" id="empSup" required placeholder="Mgr. Phạm Tiến" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500">
+                            <input type="text" id="empSup" list="supOptions" required placeholder="Chọn / Nhập Sup..." class="w-full p-2 border border-orange-300 rounded-lg outline-none focus:border-orange-600 bg-white font-semibold">
+                            <datalist id="supOptions"></datalist>
                         </div>
                         <div class="flex items-end">
-                            <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold p-2.5 rounded-lg transition-all shadow-md">
+                            <button type="submit" id="btnSaveEmp" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold p-2.5 rounded-lg transition-all shadow-md disabled:opacity-50">
                                 <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Nhân Viên
                             </button>
                         </div>
@@ -325,17 +353,16 @@
                     <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
                         <div class="flex items-center gap-3">
                             <h2 class="text-base font-bold text-gray-800 uppercase">Danh Sách Nhân Viên (<span id="empCount">0</span>)</h2>
-                            <button onclick="deleteSelectedEmployees()" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5">
+                            <button id="btnDeleteSelectedEmp" onclick="deleteSelectedEmployees()" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 disabled:opacity-50">
                                 <i class="fa-solid fa-trash-can"></i> Xóa Các Mục Đã Chọn
                             </button>
-                            <button onclick="deleteAllEmployees()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 shadow-sm">
+                            <button id="btnDeleteAllEmp" onclick="deleteAllEmployees()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50">
                                 <i class="fa-solid fa-triangle-exclamation"></i> Xóa Tất Cả CSDL
                             </button>
                         </div>
-
                         <div class="relative">
                             <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                            <input type="text" id="searchEmp" placeholder="Tìm theo Tên, Ops ID, Team..." class="pl-9 p-2 border border-gray-300 focus:border-orange-500 outline-none rounded-lg w-80 text-sm shadow-sm">
+                            <input type="text" id="searchEmp" placeholder="Tìm mượt theo Tên, Ops ID, Team, Sup..." class="pl-9 p-2 border border-orange-300 focus:border-orange-600 outline-none rounded-lg w-80 text-sm shadow-sm font-semibold">
                         </div>
                     </div>
 
@@ -355,6 +382,53 @@
                                 </tr>
                             </thead>
                             <tbody id="employeesTable" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: BẢO MẬT & QUẢN LÝ ADMIN (CHỈ ADMIN MỚI NHÌN THẤY THẺ NÀY) -->
+            <div id="tab-admin" class="tab-content hidden space-y-5">
+                <div class="bg-white rounded-xl p-5 shadow-sm border border-red-200">
+                    <div class="flex items-center gap-2 mb-3 border-b pb-3 text-red-700">
+                        <i class="fa-solid fa-user-shield text-xl"></i>
+                        <h2 class="text-base font-bold uppercase">QUẢN LÝ QUYỀN ĐĂNG NHẬP & NGƯỜI THỰC HIỆN</h2>
+                    </div>
+
+                    <form id="adminForm" onsubmit="saveAdminUser(event)" class="grid grid-cols-4 gap-3 mb-6">
+                        <div>
+                            <label class="block font-semibold text-gray-600 mb-1">Email Google được phép</label>
+                            <input type="email" id="adminEmail" required placeholder="hung.ha@spxexpress.com" class="w-full p-2 border rounded-lg outline-none focus:border-red-500 font-semibold">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-600 mb-1">Tên Người Thực Hiện (Hiển thị Logs)</label>
+                            <input type="text" id="adminDisplayName" required placeholder="HÀ VIỆT HÙNG" class="w-full p-2 border rounded-lg outline-none focus:border-red-500 font-bold">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-600 mb-1">Cấp Quyền Super Admin?</label>
+                            <select id="adminIsSuper" class="w-full p-2 border rounded-lg outline-none focus:border-red-500 font-semibold bg-white">
+                                <option value="false">Không (Chỉ có quyền Thực hiện)</option>
+                                <option value="true">Có (Xem thẻ Quyền Admin)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold p-2.5 rounded-lg transition-all shadow-md">
+                                <i class="fa-solid fa-plus mr-1"></i> Cấp Quyền Cho Email
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-900 text-white font-bold">
+                                <tr>
+                                    <th class="p-3">Email Google</th>
+                                    <th class="p-3">Tên Người Thực Hiện</th>
+                                    <th class="p-3">Super Admin</th>
+                                    <th class="p-3 text-center">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminsTable" class="divide-y divide-gray-200"></tbody>
                         </table>
                     </div>
                 </div>
@@ -387,26 +461,187 @@
 
     <!-- JAVASCRIPT LOGIC XỬ LÝ -->
     <script type="module">
+        let currentUser = null;
+        let currentUserRole = 'guest'; // 'superadmin', 'executor', 'guest'
+        let currentAdminDisplayName = 'HÀ VIỆT HÙNG';
+        
+        let adminUsersCache = [];
         let selectedEmployee = null;
         let pendingBorrowPdaList = [];
         let pendingReturnPdaList = [];
         let employeeCache = [];
         let unreturnedCache = [];
 
-        function detectDeviceType(code) {
-            if (!code) return 'N/A';
-            const upperCode = code.toUpperCase().trim();
-            if (upperCode.startsWith('VN2EQS0067') || upperCode.startsWith('VN2EQS0012')) {
-                return 'Súng Scan';
-            } else if (upperCode.startsWith('MT93')) {
-                return 'Máy mới';
-            } else if (upperCode.startsWith('MT9055') || upperCode.startsWith('MT90')) {
-                return 'Máy cũ';
+        // KHỞI TẠO XÁC THỰC AUTHENTICATION GOOGLE
+        const { signInWithPopup, signOut, onAuthStateChanged } = window.authMethods;
+        const auth = window.auth;
+        const provider = window.googleProvider;
+
+        window.loginWithGoogle = async function() {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (err) {
+                console.error("Lỗi đăng nhập:", err);
+                alert("❌ Đăng nhập không thành công. Vui lòng thử lại!");
             }
-            return 'MT93';
+        };
+
+        window.logout = function() {
+            signOut(auth).then(() => {
+                location.reload();
+            });
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            const loginOverlay = document.getElementById('loginOverlay');
+            if (user) {
+                currentUser = user;
+                loginOverlay.classList.add('hidden');
+                await checkUserPermissions(user.email);
+            } else {
+                currentUser = null;
+                loginOverlay.classList.remove('hidden');
+            }
+        });
+
+        // HÀM KIỂM TRA PHÂN QUYỀN
+        async function checkUserPermissions(email) {
+            const { collection, getDocs, query, where } = window.fs;
+            const db = window.db;
+
+            // Mặc định Super Admin khởi tạo ban đầu (Email của bạn có thể đặt ở đây hoặc tự động nhận bản ghi đầu tiên)
+            const lowerEmail = email.toLowerCase();
+
+            const snap = await getDocs(collection(db, "admin_users"));
+            adminUsersCache = [];
+            snap.forEach(doc => adminUsersCache.push({ id: doc.id, ...doc.data() }));
+
+            // Tự động khởi tạo Super Admin nếu Database trống
+            if (adminUsersCache.length === 0) {
+                const { addDoc } = window.fs;
+                const defaultSuper = { email: lowerEmail, displayName: "HÀ VIỆT HÙNG", isSuper: true };
+                await addDoc(collection(db, "admin_users"), defaultSuper);
+                adminUsersCache.push(defaultSuper);
+            }
+
+            const matchedUser = adminUsersCache.find(u => u.email.toLowerCase() === lowerEmail);
+
+            const navAdminBtn = document.getElementById('nav-admin');
+            const readOnlyWarning = document.getElementById('readOnlyWarning');
+            const currentAdminNameEl = document.getElementById('currentAdminName');
+            const userRoleBadge = document.getElementById('userRoleBadge');
+
+            if (matchedUser) {
+                currentAdminDisplayName = matchedUser.displayName || user.displayName || lowerEmail;
+                currentAdminNameEl.innerText = currentAdminDisplayName;
+
+                if (matchedUser.isSuper === true || matchedUser.isSuper === "true") {
+                    currentUserRole = 'superadmin';
+                    navAdminBtn.classList.remove('hidden');
+                    userRoleBadge.innerText = 'Role: Super Admin';
+                    userRoleBadge.className = 'inline-block bg-red-900 text-red-200 px-2 py-0.5 rounded text-[10px] font-bold';
+                } else {
+                    currentUserRole = 'executor';
+                    navAdminBtn.classList.add('hidden');
+                    userRoleBadge.innerText = 'Role: Người Thực Hiện';
+                    userRoleBadge.className = 'inline-block bg-emerald-900 text-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold';
+                }
+
+                readOnlyWarning.classList.add('hidden');
+                setFormControlsState(true);
+            } else {
+                // TÀI KHOẢN KHÁCH KHÔNG CÓ TRONG WHITELIST
+                currentUserRole = 'guest';
+                currentAdminDisplayName = user.displayName || lowerEmail;
+                currentAdminNameEl.innerText = currentAdminDisplayName;
+                navAdminBtn.classList.add('hidden');
+
+                userRoleBadge.innerText = 'Role: Khách (Chỉ Xem)';
+                userRoleBadge.className = 'inline-block bg-amber-900 text-amber-200 px-2 py-0.5 rounded text-[10px] font-bold';
+
+                readOnlyWarning.classList.remove('hidden');
+                setFormControlsState(false);
+            }
+
+            renderAdminUsers(adminUsersCache);
         }
 
+        // BẬT / TẮT NÚT THAO TÁC THEO PHÂN QUYỀN
+        function setFormControlsState(enabled) {
+            const btnConfirm = document.getElementById('btnConfirm');
+            const btnSaveEmp = document.getElementById('btnSaveEmp');
+            const btnDeleteSelectedEmp = document.getElementById('btnDeleteSelectedEmp');
+            const btnDeleteAllEmp = document.getElementById('btnDeleteAllEmp');
+            const excelFileInput = document.getElementById('excelFileInput');
+
+            if (btnConfirm) btnConfirm.disabled = !enabled;
+            if (btnSaveEmp) btnSaveEmp.disabled = !enabled;
+            if (btnDeleteSelectedEmp) btnDeleteSelectedEmp.disabled = !enabled;
+            if (btnDeleteAllEmp) btnDeleteAllEmp.disabled = !enabled;
+            if (excelFileInput) excelFileInput.disabled = !enabled;
+        }
+
+        // QUẢN LÝ THÊM/XÓA ADMIN (CHỈ SUPER ADMIN)
+        window.saveAdminUser = async function(e) {
+            e.preventDefault();
+            if (currentUserRole !== 'superadmin') return;
+
+            const { collection, addDoc } = window.fs;
+            const db = window.db;
+
+            const email = document.getElementById('adminEmail').value.trim().toLowerCase();
+            const displayName = document.getElementById('adminDisplayName').value.trim();
+            const isSuper = document.getElementById('adminIsSuper').value === "true";
+
+            try {
+                await addDoc(collection(db, "admin_users"), { email, displayName, isSuper });
+                alert(`✅ Đã cấp quyền thành công cho [${email}]!`);
+                document.getElementById('adminForm').reset();
+            } catch (err) {
+                console.error(err);
+                alert("❌ Lỗi khi thêm admin!");
+            }
+        };
+
+        function renderAdminUsers(list) {
+            const tbody = document.getElementById('adminsTable');
+            if(!tbody) return;
+
+            tbody.innerHTML = list.map(item => `
+                <tr class="hover:bg-gray-50 border-b border-gray-100">
+                    <td class="p-3 font-bold text-gray-800">${item.email}</td>
+                    <td class="p-3 font-bold text-orange-600">${item.displayName}</td>
+                    <td class="p-3">${(item.isSuper === true || item.isSuper === "true") ? '<span class="bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded text-xs">Super Admin</span>' : '<span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs">Người Thực Hiện</span>'}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteAdminUser('${item.id}', '${item.email}')" class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1 rounded font-bold text-xs transition-all">Xóa Quyền</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.deleteAdminUser = async function(id, email) {
+            if (currentUserRole !== 'superadmin') return;
+            if (!confirm(`Xác nhận xóa quyền của email [${email}]?`)) return;
+
+            const { doc, deleteDoc } = window.fs;
+            const db = window.db;
+
+            try {
+                await deleteDoc(doc(db, "admin_users", id));
+                alert("✅ Đã xóa quyền thành công!");
+            } catch (err) {
+                console.error(err);
+                alert("❌ Có lỗi xảy ra!");
+            }
+        };
+
+        // CHUYỂN TAB
         window.switchTab = function(tabName) {
+            if (tabName === 'admin' && currentUserRole !== 'superadmin') {
+                alert("⚠️ Bạn không có quyền truy cập vào khu vực Bảo Mật!");
+                return;
+            }
+
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
 
@@ -415,6 +650,29 @@
             });
             document.getElementById(`nav-${tabName}`).className = "w-full flex items-center gap-3 px-3 py-3 rounded-lg font-semibold bg-orange-500 text-white transition-all";
         };
+
+        // NHẬN DIỆN MÃ THIẾT BỊ
+        function detectDeviceType(code) {
+            if (!code) return 'Máy mới';
+            const upperCode = String(code).toUpperCase().trim();
+            if (upperCode.startsWith('VN2EQS0067') || upperCode.startsWith('VN2EQS0012')) {
+                return 'Súng Scan';
+            } else if (upperCode.startsWith('MT93')) {
+                return 'Máy mới';
+            } else if (upperCode.startsWith('MT9055') || upperCode.startsWith('MT90')) {
+                return 'Máy cũ';
+            }
+            return 'Máy mới';
+        }
+
+        function renderDeviceBadge(type) {
+            if (type === 'Súng Scan') {
+                return `<span class="bg-purple-100 text-purple-800 font-bold px-2.5 py-0.5 rounded-full text-xs">Súng Scan</span>`;
+            } else if (type === 'Máy cũ') {
+                return `<span class="bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-full text-xs">Máy cũ</span>`;
+            }
+            return `<span class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full text-xs">Máy mới</span>`;
+        }
 
         setInterval(() => {
             const now = new Date();
@@ -470,8 +728,35 @@
                 employeeCache = [];
                 snapshot.forEach(doc => employeeCache.push({ id: doc.id, ...doc.data() }));
                 renderEmployees(employeeCache);
+                updateDropdownOptions(employeeCache);
+            });
+
+            onSnapshot(collection(db, "admin_users"), (snapshot) => {
+                adminUsersCache = [];
+                snapshot.forEach(doc => adminUsersCache.push({ id: doc.id, ...doc.data() }));
+                renderAdminUsers(adminUsersCache);
             });
         });
+
+        function updateDropdownOptions(emps) {
+            const teamSet = new Set(["Admin", "ASM", "Cache", "GTC", "Inbound", "Manual", "OB North B1", "OB North B2", "OB Xmetro", "TBS", "Ops Support"]);
+            const supSet = new Set(["Mgr. Phạm Tiến", "Sup Xuân Huy", "Sup Tuấn Anh", "Sup Anh Sơn", "AM Hồng Đăng"]);
+
+            emps.forEach(e => {
+                if (e.team) teamSet.add(e.team.trim());
+                if (e.supervisor) supSet.add(e.supervisor.trim());
+            });
+
+            const teamDatalist = document.getElementById('teamOptions');
+            if (teamDatalist) {
+                teamDatalist.innerHTML = Array.from(teamSet).map(t => `<option value="${t}">`).join('');
+            }
+
+            const supDatalist = document.getElementById('supOptions');
+            if (supDatalist) {
+                supDatalist.innerHTML = Array.from(supSet).map(s => `<option value="${s}">`).join('');
+            }
+        }
 
         // AUTO-FILL OPS ID
         const scanEmpInput = document.getElementById('scanEmpInput');
@@ -635,7 +920,13 @@
             renderPendingList();
         };
 
+        // XỬ LÝ LƯU CẤP / TRẢ
         window.processBatchTransaction = async function() {
+            if (currentUserRole === 'guest') {
+                alert("🔒 Tài khoản của bạn chưa được cấp quyền thao tác!");
+                return;
+            }
+
             if (pendingBorrowPdaList.length === 0 && pendingReturnPdaList.length === 0) {
                 alert("⚠️ Hãy quét ít nhất 1 mã PDA/Súng Scan để cấp mượn hoặc thu hồi!");
                 return;
@@ -646,7 +937,9 @@
             
             const nowObj = new Date();
             const timeStr = `${nowObj.getHours().toString().padStart(2,'0')}:${nowObj.getMinutes().toString().padStart(2,'0')}:${nowObj.getSeconds().toString().padStart(2,'0')} ${nowObj.getDate().toString().padStart(2,'0')}/${(nowObj.getMonth()+1).toString().padStart(2,'0')}/${nowObj.getFullYear()}`;
-            const adminName = "HÀ VIỆT HÙNG";
+            
+            // ADMIN NAME LẤY TỰ ĐỘNG THEO TÀI KHOẢN ĐĂNG NHẬP
+            const adminName = currentAdminDisplayName;
 
             if (pendingBorrowPdaList.length > 0) {
                 if (!selectedEmployee) {
@@ -712,7 +1005,7 @@
                             logDetails = `⚠️ TRẢ HỘ cho [${orig.empName} - ${orig.opsId}]`;
                         }
 
-                        const pdaType = orig.pdaType || detectDeviceType(returnPda);
+                        const pdaType = detectDeviceType(returnPda);
 
                         await addDoc(collection(db, "logs"), {
                             timestamp: timeStr,
@@ -835,15 +1128,15 @@
 
             const listContainer = document.getElementById('modalPdaList');
             listContainer.innerHTML = empItems.map(item => {
-                const devType = item.pdaType || detectDeviceType(item.pdaCode);
+                const devType = detectDeviceType(item.pdaCode);
                 return `
                     <div class="bg-orange-50/50 border border-orange-200 rounded-lg p-3 flex justify-between items-center">
                         <div>
                             <span class="font-extrabold text-orange-600 text-sm">${item.pdaCode}</span>
-                            <span class="bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded text-[10px] ml-2">${devType}</span>
+                            <span class="ml-2">${renderDeviceBadge(devType)}</span>
                             <p class="text-[11px] text-gray-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>Mượn lúc: ${item.borrowTime}</p>
                         </div>
-                        <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow transition-all">
+                        <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${currentUserRole === 'guest' ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow transition-all disabled:opacity-50">
                             Nhận Trả
                         </button>
                     </div>
@@ -862,11 +1155,11 @@
             const miniTbody = document.getElementById('unreturnedMiniTable');
 
             fullTbody.innerHTML = list.map(item => {
-                const devType = item.pdaType || detectDeviceType(item.pdaCode);
+                const devType = detectDeviceType(item.pdaCode);
                 return `
                     <tr class="hover:bg-orange-50/40">
                         <td class="p-3 font-bold text-orange-600">${item.pdaCode}</td>
-                        <td class="p-3"><span class="bg-slate-100 text-slate-700 font-bold px-2.5 py-1 rounded-full text-xs">${devType}</span></td>
+                        <td class="p-3">${renderDeviceBadge(devType)}</td>
                         <td class="p-3 font-semibold">${item.opsId}</td>
                         <td class="p-3 font-bold">${item.empName}</td>
                         <td class="p-3">${item.team}</td>
@@ -874,7 +1167,7 @@
                         <td class="p-3">${item.borrowTime}</td>
                         <td class="p-3">${item.adminName}</td>
                         <td class="p-3 text-center">
-                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded font-bold text-xs shadow-sm">
+                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${currentUserRole === 'guest' ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded font-bold text-xs shadow-sm disabled:opacity-50">
                                 Nhận Trả
                             </button>
                         </td>
@@ -883,36 +1176,35 @@
             }).join('');
 
             miniTbody.innerHTML = list.slice(0, 5).map(item => {
-                const devType = item.pdaType || detectDeviceType(item.pdaCode);
+                const devType = detectDeviceType(item.pdaCode);
                 return `
                     <tr>
                         <td class="p-2.5 font-bold text-orange-600">${item.pdaCode}</td>
-                        <td class="p-2.5"><span class="bg-gray-100 text-gray-800 font-semibold px-2 py-0.5 rounded text-[11px]">${devType}</span></td>
+                        <td class="p-2.5">${renderDeviceBadge(devType)}</td>
                         <td class="p-2.5 font-bold">${item.empName} <span class="text-gray-400 font-normal">(${item.opsId})</span></td>
                         <td class="p-2.5">${item.team} - ${item.supervisor}</td>
                         <td class="p-2.5">${item.borrowTime}</td>
                         <td class="p-2.5 text-right">
-                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded font-bold hover:bg-amber-200">Nhận Trả</button>
+                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${currentUserRole === 'guest' ? 'disabled' : ''} class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded font-bold hover:bg-amber-200 disabled:opacity-50">Nhận Trả</button>
                         </td>
                     </tr>
                 `;
             }).join('');
         }
 
-        // RENDER LOGS TABLE (CÓ CỘT LOẠI THIẾT BỊ VÀ ĐỒNG BỘ NGUYÊN BẢNG CÙNG 1 FONT CHỮ)
         function renderLogs(logs) {
             document.getElementById('logsTable').innerHTML = logs.map(log => {
-                const devType = log.pdaType || detectDeviceType(log.pdaCode);
+                const devType = detectDeviceType(log.pdaCode);
                 return `
                     <tr class="hover:bg-gray-50 border-b border-gray-100">
                         <td class="p-3 text-gray-600 font-bold text-xs">${log.timestamp}</td>
                         <td class="p-3 font-bold text-orange-600">${log.pdaCode}</td>
-                        <td class="p-3"><span class="bg-slate-100 text-slate-700 font-bold px-2 py-1 rounded text-xs">${devType}</span></td>
+                        <td class="p-3">${renderDeviceBadge(devType)}</td>
                         <td class="p-3"><span class="${log.status === 'MƯỢN' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} font-bold px-2 py-1 rounded text-xs">${log.status}</span></td>
                         <td class="p-3 font-semibold">${log.opsId}</td>
                         <td class="p-3 font-bold">${log.empName}</td>
                         <td class="p-3 text-xs ${log.details && log.details.includes('TRẢ HỘ') ? 'text-red-600 font-bold' : 'text-gray-600'}">${log.details || 'Chính chủ'}</td>
-                        <td class="p-3 text-xs">${log.adminName}</td>
+                        <td class="p-3 text-xs font-bold text-slate-700">${log.adminName}</td>
                     </tr>
                 `;
             }).join('');
@@ -924,22 +1216,58 @@
             const selectAllBox = document.getElementById('selectAllEmp');
             if(selectAllBox) selectAllBox.checked = false;
 
+            if (emps.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400 font-bold">Không tìm thấy nhân viên phù hợp...</td></tr>`;
+                return;
+            }
+
             tbody.innerHTML = emps.map(emp => `
-                <tr class="hover:bg-gray-50 border-b border-gray-100">
+                <tr class="hover:bg-orange-50/30 border-b border-gray-100 transition-all">
                     <td class="p-3 text-center">
-                        <input type="checkbox" value="${emp.id}" class="emp-checkbox w-4 h-4 rounded cursor-pointer accent-orange-600">
+                        <input type="checkbox" value="${emp.id}" class="emp-checkbox w-4 h-4 rounded cursor-pointer accent-orange-600" ${currentUserRole === 'guest' ? 'disabled' : ''}>
                     </td>
                     <td class="p-3 font-bold text-orange-600">${emp.opsId}</td>
-                    <td class="p-3 font-bold">${emp.empName}</td>
-                    <td class="p-3 text-gray-500 font-bold text-xs">${emp.email || 'N/A'}</td>
-                    <td class="p-3 font-semibold">${emp.team || 'N/A'}</td>
-                    <td class="p-3">${emp.supervisor || 'N/A'}</td>
+                    <td class="p-3 font-bold text-gray-800">${emp.empName}</td>
+                    <td class="p-3 text-gray-500 font-medium text-xs">${emp.email || 'N/A'}</td>
+                    <td class="p-3 font-semibold"><span class="bg-gray-100 text-gray-700 px-2 py-1 rounded">${emp.team || 'N/A'}</span></td>
+                    <td class="p-3 font-semibold text-gray-700">${emp.supervisor || 'N/A'}</td>
                     <td class="p-3 text-center">
-                        <button onclick="editEmployee('${emp.opsId}', '${emp.empName}', '${emp.email || ''}', '${emp.team || ''}', '${emp.supervisor || ''}')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded font-bold text-xs mr-1 transition-all">Sửa</button>
-                        <button onclick="deleteSingleEmployee('${emp.id}', '${emp.empName}')" class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1 rounded font-bold text-xs transition-all">Xóa</button>
+                        <button onclick="editEmployee('${emp.opsId}', '${emp.empName}', '${emp.email || ''}', '${emp.team || ''}', '${emp.supervisor || ''}')" ${currentUserRole === 'guest' ? 'disabled' : ''} class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded font-bold text-xs mr-1 transition-all disabled:opacity-50">Sửa</button>
+                        <button onclick="deleteSingleEmployee('${emp.id}', '${emp.empName}')" ${currentUserRole === 'guest' ? 'disabled' : ''} class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1 rounded font-bold text-xs transition-all disabled:opacity-50">Xóa</button>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        let searchTimeout = null;
+        const searchEmpInput = document.getElementById('searchEmp');
+        if (searchEmpInput) {
+            searchEmpInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const keyword = this.value.toLowerCase().trim();
+                    if (!keyword) {
+                        renderEmployees(employeeCache);
+                        return;
+                    }
+
+                    const filtered = employeeCache.filter(e => {
+                        const opsId = (e.opsId || '').toLowerCase();
+                        const empName = (e.empName || '').toLowerCase();
+                        const team = (e.team || '').toLowerCase();
+                        const supervisor = (e.supervisor || '').toLowerCase();
+                        const email = (e.email || '').toLowerCase();
+
+                        return opsId.includes(keyword) || 
+                               empName.includes(keyword) || 
+                               team.includes(keyword) || 
+                               supervisor.includes(keyword) || 
+                               email.includes(keyword);
+                    });
+
+                    renderEmployees(filtered);
+                }, 100);
+            });
         }
 
         window.toggleSelectAllEmployees = function(master) {
@@ -952,6 +1280,7 @@
         };
 
         window.deleteSingleEmployee = async function(id, name) {
+            if (currentUserRole === 'guest') return;
             if (!confirm(`Bạn có chắc chắn muốn xóa nhân viên "${name}" khỏi hệ thống?`)) return;
 
             const { doc, deleteDoc } = window.fs;
@@ -967,6 +1296,7 @@
         };
 
         window.deleteSelectedEmployees = async function() {
+            if (currentUserRole === 'guest') return;
             const selectedCheckboxes = document.querySelectorAll('.emp-checkbox:checked');
             if (selectedCheckboxes.length === 0) {
                 alert("⚠️ Vui lòng tích chọn ít nhất 1 nhân viên để xóa!");
@@ -993,6 +1323,7 @@
         };
 
         window.deleteAllEmployees = async function() {
+            if (currentUserRole === 'guest') return;
             if (employeeCache.length === 0) {
                 alert("⚠️ CSDL Nhân viên hiện đang trống!");
                 return;
@@ -1036,6 +1367,7 @@
         };
 
         window.editEmployee = function(opsId, name, email, team, sup) {
+            if (currentUserRole === 'guest') return;
             document.getElementById('empOpsId').value = opsId;
             document.getElementById('empName').value = name;
             document.getElementById('empEmail').value = email;
@@ -1048,6 +1380,8 @@
 
         window.saveEmployee = async function(e) {
             e.preventDefault();
+            if (currentUserRole === 'guest') return;
+
             const { collection, addDoc, query, where, getDocs, updateDoc } = window.fs;
             const db = window.db;
 
@@ -1078,6 +1412,7 @@
         };
 
         async function saveBatchEmployees(dataArray) {
+            if (currentUserRole === 'guest') return;
             const { collection, writeBatch, doc } = window.fs;
             const db = window.db;
             let batch = writeBatch(db);
@@ -1112,6 +1447,7 @@
         }
 
         document.getElementById('excelFileInput').addEventListener('change', function(e) {
+            if (currentUserRole === 'guest') return;
             const file = e.target.files[0];
             if (!file) return;
 
@@ -1136,6 +1472,7 @@
         });
 
         window.returnPdaDirect = async function(docId, pdaCode) {
+            if (currentUserRole === 'guest') return;
             if (!confirm(`Xác nhận thu hồi thiết bị [${pdaCode}]?`)) return;
 
             const { collection, addDoc, doc, deleteDoc, getDoc, serverTimestamp } = window.fs;
@@ -1161,7 +1498,7 @@
                     logDetails = `⚠️ TRẢ HỘ cho [${data.empName} - ${data.opsId}]`;
                 }
 
-                const pdaType = data.pdaType || detectDeviceType(pdaCode);
+                const pdaType = detectDeviceType(pdaCode);
 
                 await addDoc(collection(db, "logs"), {
                     timestamp: timeStr,
@@ -1172,23 +1509,13 @@
                     opsId: logOpsId,
                     empName: logEmpName,
                     details: logDetails,
-                    adminName: "HÀ VIỆT HÙNG"
+                    adminName: currentAdminDisplayName
                 });
 
                 closeModal();
                 alert(`✅ Đã thu hồi thiết bị ${pdaCode}!`);
             }
         };
-
-        const searchEmp = document.getElementById('searchEmp');
-        if (searchEmp) {
-            searchEmp.addEventListener('input', function() {
-                const keyword = this.value.toLowerCase().trim();
-                document.querySelectorAll('#employeesTable tr').forEach(row => {
-                    row.style.display = row.innerText.toLowerCase().includes(keyword) ? '' : 'none';
-                });
-            });
-        }
 
         const searchUnreturned = document.getElementById('searchUnreturned');
         if (searchUnreturned) {
