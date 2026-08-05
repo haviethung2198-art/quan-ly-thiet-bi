@@ -37,7 +37,16 @@
     </script>
 
     <style>
-        * { font-family: 'Plus Jakarta Sans', sans-serif !important; }
+        /* Áp dụng font Plus Jakarta Sans nhưng ngoại trừ các icon FontAwesome */
+        body, input, button, select, textarea, table, th, td, h1, h2, h3, h4, p, span, div {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        
+        /* Bảo vệ FontAwesome không bị ghi đè font */
+        .fa, .fas, .far, .fal, .fad, .fab, .fa-solid, .fa-regular, .fa-brands {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+        }
+
         .radar-box { position: relative; width: 70px; height: 70px; border-radius: 50%; background: rgba(255,247,237,0.8); display: flex; align-items: center; justify-content: center; }
         .radar-circle { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px solid rgba(249,115,22,0.4); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(1.4); opacity: 0; } }
@@ -93,7 +102,7 @@
             </div>
             <div class="text-right text-gray-600">
                 <span id="currentDay" class="font-semibold mr-2">Thứ tư – Ngày 05/08/2026</span>
-                <span id="currentTime" class="font-bold text-orange-600 text-base">13:21:40</span>
+                <span id="currentTime" class="font-bold text-orange-600 text-base">13:30:00</span>
             </div>
         </header>
 
@@ -237,7 +246,7 @@
                 </div>
             </div>
 
-            <!-- TAB 3: LOGS NHẬT KÝ (ĐÃ THÊM CỘT LOẠI THIẾT BỊ VÀ ĐỒNG BỘ FONT CHỮ) -->
+            <!-- TAB 3: LOGS NHẬT KÝ -->
             <div id="tab-logs" class="tab-content hidden bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                 <div class="flex justify-between items-center mb-4 border-b pb-3">
                     <h2 class="text-base font-bold text-gray-800 uppercase">LOGS NHẬT KÝ MƯỢN / TRẢ</h2>
@@ -384,7 +393,6 @@
         let employeeCache = [];
         let unreturnedCache = [];
 
-        // HÀM NHẬN DIỆN LOẠI THIẾT BỊ ĐỘNG
         function detectDeviceType(code) {
             if (!code) return 'N/A';
             const upperCode = code.toUpperCase().trim();
@@ -589,7 +597,7 @@
                 const devType = detectDeviceType(code);
                 html += `
                     <div class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded flex justify-between items-center">
-                        <span>[MƯỢN] ${code} <span class="text-[10px] bg-emerald-200 text-emerald-900 px-1 rounded font-sans ml-1">${devType}</span></span>
+                        <span>[MƯỢN] ${code} <span class="text-[10px] bg-emerald-200 text-emerald-900 px-1 rounded ml-1">${devType}</span></span>
                         <button onclick="removePending('borrow', ${index})" class="text-emerald-600 hover:text-red-600 font-extrabold text-sm ml-2">×</button>
                     </div>
                 `;
@@ -627,7 +635,6 @@
             renderPendingList();
         };
 
-        // LƯU TRANSACTION TỰ ĐỘNG LƯU PHÂN LOẠI THIẾT BỊ VÀO LOGS
         window.processBatchTransaction = async function() {
             if (pendingBorrowPdaList.length === 0 && pendingReturnPdaList.length === 0) {
                 alert("⚠️ Hãy quét ít nhất 1 mã PDA/Súng Scan để cấp mượn hoặc thu hồi!");
@@ -735,7 +742,6 @@
             scanEmpInput.focus();
         };
 
-        // PIVOT TABLE THEO SUPERVISOR
         function renderPivotTable(unreturnedList) {
             const container = document.getElementById('pivotContainer');
             document.getElementById('pivotTotalPdas').innerText = unreturnedList.length;
@@ -851,7 +857,6 @@
             document.getElementById('empDetailsModal').classList.add('hidden');
         };
 
-        // RENDER BẢNG UNRETURNED
         function renderUnreturned(list) {
             const fullTbody = document.getElementById('unreturnedFullTable');
             const miniTbody = document.getElementById('unreturnedMiniTable');
