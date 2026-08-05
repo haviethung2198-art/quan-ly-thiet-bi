@@ -132,7 +132,7 @@
             </div>
             <div class="text-right text-gray-600">
                 <span id="currentDay" class="font-semibold mr-2">Thứ tư – Ngày 05/08/2026</span>
-                <span id="currentTime" class="font-bold text-orange-600 text-base">14:45:00</span>
+                <span id="currentTime" class="font-bold text-orange-600 text-base">14:50:00</span>
             </div>
         </header>
 
@@ -561,7 +561,6 @@
             }
 
             renderAdminUsers(adminUsersCache);
-            // RE-RENDER ĐỂ CẬP NHẬT TRẠNG THÁI NÚT VÀO THỜI ĐIỂM HOÀN TẤT XÁC THỰC
             renderUnreturned(unreturnedCache);
             renderEmployees(employeeCache);
         }
@@ -916,6 +915,7 @@
             renderPendingList();
         };
 
+        // TỐI ƯU HÓA BATCH GHI NHẬN TỨC THÌ (BATCH TRANSACTION)
         window.processBatchTransaction = async function() {
             if (currentUserRole === 'guest') {
                 alert("🔒 Tài khoản của bạn chưa được cấp quyền thao tác!");
@@ -927,20 +927,26 @@
                 return;
             }
 
-            const { collection, addDoc, query, where, getDocs, deleteDoc, doc, serverTimestamp } = window.fs;
+            if (pendingBorrowPdaList.length > 0 && !selectedEmployee) {
+                alert("⚠️ Vui lòng quét Ops ID nhân viên mượn máy trước!");
+                return;
+            }
+
+            const btnConfirm = document.getElementById('btnConfirm');
+            btnConfirm.disabled = true;
+            btnConfirm.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang ghi nhận tức thì...`;
+
+            const { collection, writeBatch, doc, query, where, getDocs, serverTimestamp } = window.fs;
             const db = window.db;
             
             const nowObj = new Date();
             const timeStr = `${nowObj.getHours().toString().padStart(2,'0')}:${nowObj.getMinutes().toString().padStart(2,'0')}:${nowObj.getSeconds().toString().padStart(2,'0')} ${nowObj.getDate().toString().padStart(2,'0')}/${(nowObj.getMonth()+1).toString().padStart(2,'0')}/${nowObj.getFullYear()}`;
-            
             const adminName = currentAdminDisplayName;
 
-            if (pendingBorrowPdaList.length > 0) {
-                if (!selectedEmployee) {
-                    alert("⚠️ Vui lòng quét Ops ID nhân viên mượn máy trước!");
-                    return;
-                }
+            const batch = writeBatch(db);
 
+            // 1. Lọc và chuẩn bị dữ liệu mượn máy
+            if (pendingBorrowPdaList.length > 0) {
                 for (const borrowPda of pendingBorrowPdaList) {
                     const qCheck = query(collection(db, "unreturned"), where("pdaCode", "==", borrowPda));
                     const snapCheck = await getDocs(qCheck);
@@ -951,7 +957,9 @@
 
                     const pdaType = detectDeviceType(borrowPda);
 
-                    await addDoc(collection(db, "unreturned"), {
+                    // Thêm bản ghi Unreturned vào Batch
+                    const unreturnedRef = doc(collection(db, "unreturned"));
+                    batch.set(unreturnedRef, {
                         pdaCode: borrowPda,
                         pdaType: pdaType,
                         opsId: selectedEmployee.opsId,
@@ -963,7 +971,9 @@
                         adminName: adminName
                     });
 
-                    await addDoc(collection(db, "logs"), {
+                    // Thêm bản ghi Logs vào Batch
+                    const logRef = doc(collection(db, "logs"));
+                    batch.set(logRef, {
                         timestamp: timeStr,
                         createdAt: serverTimestamp(),
                         pdaCode: borrowPda,
@@ -977,6 +987,7 @@
                 }
             }
 
+            // 2. Lọc và chuẩn bị dữ liệu trả máy
             if (pendingReturnPdaList.length > 0) {
                 for (const item of pendingReturnPdaList) {
                     const returnPda = item.code;
@@ -986,8 +997,9 @@
                     const snapshot = await getDocs(q);
 
                     if (!snapshot.empty) {
-                        const docId = snapshot.docs[0].id;
-                        await deleteDoc(doc(db, "unreturned", docId));
+                        const unreturnedDocId = snapshot.docs[0].id;
+                        // Xóa khỏi danh sách chưa trả
+                        batch.delete(doc(db, "unreturned", unreturnedDocId));
 
                         let logOpsId = orig.opsId;
                         let logEmpName = orig.empName;
@@ -1001,7 +1013,9 @@
 
                         const pdaType = detectDeviceType(returnPda);
 
-                        await addDoc(collection(db, "logs"), {
+                        // Thêm bản ghi Logs Trả vào Batch
+                        const logRef = doc(collection(db, "logs"));
+                        batch.set(logRef, {
                             timestamp: timeStr,
                             createdAt: serverTimestamp(),
                             pdaCode: returnPda,
@@ -1016,17 +1030,28 @@
                 }
             }
 
-            alert("✅ Thực hiện thành công tất cả thao tác mượn/trả!");
+            try {
+                // THỰC THI GHI DỮ LIỆU TẤT CẢ TRONG 1 LẦN GỌI DUY NHẤT (TỨC THÌ)
+                await batch.commit();
 
-            clearPendingList();
-            borrowPdaInput.value = '';
-            returnPdaInput.value = '';
-            scanEmpInput.value = '';
-            document.getElementById('displayEmpTeam').value = '';
-            document.getElementById('displayEmpSup').value = '';
-            selectedEmployee = null;
-            document.getElementById('selectedEmpBox').innerHTML = `<p class="text-gray-400 text-xs">Chưa quét thông tin nhân viên</p>`;
-            scanEmpInput.focus();
+                clearPendingList();
+                borrowPdaInput.value = '';
+                returnPdaInput.value = '';
+                scanEmpInput.value = '';
+                document.getElementById('displayEmpTeam').value = '';
+                document.getElementById('displayEmpSup').value = '';
+                selectedEmployee = null;
+                document.getElementById('selectedEmpBox').innerHTML = `<p class="text-gray-400 text-xs">Chưa quét thông tin nhân viên</p>`;
+                scanEmpInput.focus();
+
+                alert("⚡ Đã ghi nhận thành công tức thì tất cả thao tác mượn/trả!");
+            } catch (err) {
+                console.error("Lỗi khi ghi nhận batch: ", err);
+                alert("❌ Có lỗi xảy ra khi lưu dữ liệu hàng loạt!");
+            } finally {
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = `XÁC NHẬN CẤP / TRẢ TẤT CẢ`;
+            }
         };
 
         function renderPivotTable(unreturnedList) {
@@ -1145,7 +1170,6 @@
             document.getElementById('empDetailsModal').classList.add('hidden');
         };
 
-        // HIỂN THỊ CÁC BẢNG UNRETURNED
         function renderUnreturned(list) {
             const fullTbody = document.getElementById('unreturnedFullTable');
             const miniTbody = document.getElementById('unreturnedMiniTable');
