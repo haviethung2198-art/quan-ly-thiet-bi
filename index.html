@@ -47,197 +47,243 @@
         .fa, .fas, .far, .fal, .fad, .fab, .fa-solid, .fa-regular, .fa-brands {
             font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
         }
-        .radar-box { position: relative; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,247,237,0.8); display: flex; align-items: center; justify-content: center; }
+        .radar-box { position: relative; width: 60px; height: 60px; border-radius: 50%; background: rgba(255,247,237,0.8); display: flex; align-items: center; justify-content: center; }
         .radar-circle { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px solid rgba(249,115,22,0.4); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(1.4); opacity: 0; } }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast-animate { animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
-<body class="bg-[#f4f6f8] text-gray-800 text-xs flex h-screen overflow-hidden">
+<body class="bg-[#f4f6f8] text-gray-800 text-sm flex h-screen overflow-hidden">
+
+    <!-- CONTAINER THÔNG BÁO TOAST GÓC BÊN PHẢI MÀN HÌNH -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-[200] flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- CUSTOM DIALOG XÁC NHẬN / THÔNG BÁO TÙY CHỈNH THAY THẾ ALERT/CONFIRM -->
+    <div id="customConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 transition-all transform scale-100">
+            <div id="confirmHeader" class="p-4 bg-slate-900 text-white flex items-center gap-3">
+                <i id="confirmIcon" class="fa-solid fa-circle-question text-xl text-orange-400"></i>
+                <h3 id="confirmTitle" class="font-extrabold text-base">Xác nhận thao tác</h3>
+            </div>
+            <div class="p-5">
+                <p id="confirmMessage" class="text-xs font-semibold text-gray-700 leading-relaxed"></p>
+            </div>
+            <div class="bg-gray-50 px-5 py-3 border-t flex justify-end gap-2" id="confirmActions">
+                <button id="btnConfirmCancel" onclick="closeCustomConfirm(false)" class="px-4 py-2 rounded-xl border border-gray-300 font-bold text-gray-600 hover:bg-gray-100 text-xs transition-all">Hủy bỏ</button>
+                <button id="btnConfirmOk" onclick="closeCustomConfirm(true)" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm transition-all">Đồng ý</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CỬA SỔ CẢNH BÁO BỘ GÕ TIẾNG VIỆT KHẨN CẤP -->
+    <div id="vietnameseWarningModal" class="fixed inset-0 bg-red-950/80 backdrop-blur-md z-[180] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full text-center p-6 space-y-4 border-2 border-red-500 animate-bounce-short">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner">
+                <i class="fa-solid fa-keyboard"></i>
+            </div>
+            <div>
+                <h2 class="text-base font-extrabold text-red-600 uppercase tracking-wide">PHÁT HIỆN BỘ GÕ TIẾNG VIỆT!</h2>
+                <p class="text-xs font-bold text-gray-700 mt-2">Hệ thống đã từ chối ký tự vừa nhập để tránh sai lệch mã PDA / Mã NV.</p>
+                <div class="bg-red-50 border border-red-200 rounded-xl p-3 text-left mt-3 text-xs space-y-1">
+                    <p class="font-bold text-red-800"><i class="fa-solid fa-circle-info mr-1"></i> Hướng dẫn khắc phục:</p>
+                    <p class="text-red-700">• Bấm phím <kbd class="bg-white border px-1 rounded text-[10px] font-bold">Ctrl + Shift</kbd> hoặc <kbd class="bg-white border px-1 rounded text-[10px] font-bold">Alt + Z</kbd> để chuyển Unikey/EVKey sang chế độ <b>Tiếng Anh (E)</b>.</p>
+                </div>
+            </div>
+            <button onclick="closeVietnameseModal()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-md text-xs transition-all">
+                ĐÃ TẮT TIẾNG VIỆT - TẾP TỤC QUÉT
+            </button>
+        </div>
+    </div>
 
     <!-- MODAL BẮT BUỘC ĐĂNG NHẬP GOOGLE -->
     <div id="loginOverlay" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-5 border border-gray-100">
-            <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
+            <div class="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner">
                 <i class="fa-solid fa-shield-halved"></i>
             </div>
             <div>
-                <h2 class="text-lg font-extrabold text-gray-800">HỆ THỐNG QUẢN LÝ CẤP PHÁT</h2>
-                <p class="text-[11px] text-orange-600 font-bold mt-0.5">BN B Mega SOC</p>
-                <p class="text-[11px] text-gray-500 mt-2">Vui lòng đăng nhập bằng tài khoản Google để xác thực quyền truy cập vào hệ thống.</p>
+                <h2 class="text-xl font-extrabold text-gray-800">HỆ THỐNG QUẢN LÝ CẤP PHÁT</h2>
+                <p class="text-xs text-orange-600 font-bold mt-0.5">BN B Mega SOC</p>
+                <p class="text-xs text-gray-500 mt-2">Vui lòng đăng nhập bằng tài khoản Google để xác thực quyền truy cập vào hệ thống.</p>
             </div>
-            <button onclick="loginWithGoogle()" class="w-full bg-white hover:bg-gray-50 text-gray-700 font-bold py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm flex items-center justify-center gap-3 transition-all hover:shadow text-xs">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4" alt="Google">
+            <button onclick="loginWithGoogle()" class="w-full bg-white hover:bg-gray-50 text-gray-700 font-bold py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm flex items-center justify-center gap-3 transition-all hover:shadow text-sm">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
                 <span>Đăng nhập với Google</span>
             </button>
         </div>
     </div>
 
     <!-- 1. SIDEBAR BÊN TRÁI -->
-    <aside class="w-60 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0 shadow-lg">
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0 shadow-lg">
         <div>
-            <div class="p-3 bg-orange-600 text-white flex items-center gap-2.5">
-                <i class="fa-solid fa-boxes-stacked text-xl"></i>
+            <div class="p-3.5 bg-orange-600 text-white flex items-center gap-3">
+                <i class="fa-solid fa-boxes-stacked text-2xl"></i>
                 <div>
-                    <h1 class="font-extrabold text-sm leading-tight">QUẢN LÝ CẤP PHÁT</h1>
-                    <p class="text-[10px] text-orange-200">BN B Mega SOC</p>
+                    <h1 class="font-extrabold text-base leading-tight">QUẢN LÝ CẤP PHÁT</h1>
+                    <p class="text-xs text-orange-200">BN B Mega SOC</p>
                 </div>
             </div>
 
-            <nav class="p-2 space-y-1">
-                <p class="text-[10px] font-bold text-slate-500 uppercase px-2.5 py-1.5">Danh mục hệ thống</p>
-                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg font-semibold bg-orange-500 text-white transition-all text-xs">
-                    <i class="fa-solid fa-house text-sm w-4"></i> Cấp Phát Thiết Bị
+            <nav class="p-2.5 space-y-1">
+                <p class="text-xs font-bold text-slate-500 uppercase px-3 py-1.5">Danh mục hệ thống</p>
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold bg-orange-500 text-white transition-all text-sm">
+                    <i class="fa-solid fa-house text-base w-5"></i> Cấp Phát Thiết Bị
                 </button>
-                <button onclick="switchTab('unreturned')" id="nav-unreturned" class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-xs">
-                    <i class="fa-solid fa-clock-rotate-left text-sm w-4 text-amber-400"></i> Unreturned List
+                <button onclick="switchTab('unreturned')" id="nav-unreturned" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-sm">
+                    <i class="fa-solid fa-clock-rotate-left text-base w-5 text-amber-400"></i> Unreturned List
                 </button>
-                <button onclick="switchTab('pivot')" id="nav-pivot" class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-xs">
-                    <i class="fa-solid fa-chart-pie text-sm w-4 text-purple-400"></i> Pivot Theo Sup
+                <button onclick="switchTab('pivot')" id="nav-pivot" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-sm">
+                    <i class="fa-solid fa-chart-pie text-base w-5 text-purple-400"></i> Pivot Theo Sup
                 </button>
-                <button onclick="switchTab('logs')" id="nav-logs" class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-xs">
-                    <i class="fa-solid fa-list-check text-sm w-4 text-blue-400"></i> Logs Nhật Ký
+                <button onclick="switchTab('logs')" id="nav-logs" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-sm">
+                    <i class="fa-solid fa-list-check text-base w-5 text-blue-400"></i> Logs Nhật Ký
                 </button>
-                <button onclick="switchTab('employees')" id="nav-employees" class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-xs">
-                    <i class="fa-solid fa-users text-sm w-4 text-emerald-400"></i> Quản Lý Nhân Viên
+                <button onclick="switchTab('employees')" id="nav-employees" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-sm">
+                    <i class="fa-solid fa-users text-base w-5 text-emerald-400"></i> Quản Lý Nhân Viên
                 </button>
                 
                 <!-- TAB BẢO MẬT & ADMIN -->
-                <button onclick="switchTab('admin')" id="nav-admin" class="hidden w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-red-400 text-xs">
-                    <i class="fa-solid fa-user-shield text-sm w-4"></i> Bảo Mật & Quyền Admin
+                <button onclick="switchTab('admin')" id="nav-admin" class="hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-red-400 text-sm">
+                    <i class="fa-solid fa-user-shield text-base w-5"></i> Bảo Mật & Quyền Admin
                 </button>
             </nav>
         </div>
 
-        <div class="p-3 border-t border-slate-800 text-[11px] text-slate-400 space-y-1.5">
+        <div class="p-3.5 border-t border-slate-800 text-xs text-slate-400 space-y-1.5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-[9px] text-gray-500 uppercase font-bold">Người Thực Hiện</p>
-                    <p id="currentAdminName" class="text-slate-200 font-bold truncate max-w-[120px]">Đang tải...</p>
+                    <p class="text-[10px] text-gray-500 uppercase font-bold">Người Thực Hiện</p>
+                    <p id="currentAdminName" class="text-slate-200 font-bold truncate max-w-[130px]">Đang tải...</p>
                 </div>
-                <button onclick="logout()" class="text-red-400 hover:text-red-300 font-bold text-[11px] bg-slate-800 p-1.5 rounded-lg border border-slate-700" title="Đăng xuất">
+                <button onclick="logout()" class="text-red-400 hover:text-red-300 font-bold text-xs bg-slate-800 p-1.5 rounded-lg border border-slate-700" title="Đăng xuất">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
-            <p id="userRoleBadge" class="inline-block bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[9px] font-bold">Role: Loading...</p>
+            <p id="userRoleBadge" class="inline-block bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[10px] font-bold">Role: Loading...</p>
         </div>
     </aside>
 
     <!-- MAIN CONTENT AREA -->
-    <div class="flex-1 flex flex-col h-screen overflow-y-auto">
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
         <header class="bg-white border-b border-gray-200 px-5 py-2.5 flex justify-between items-center shrink-0">
-            <div class="flex items-center gap-2.5">
-                <span class="text-orange-600 font-bold text-sm">BN B Mega SOC</span>
+            <div class="flex items-center gap-3">
+                <span class="text-orange-600 font-bold text-base">BN B Mega SOC</span>
                 <span class="text-gray-300">|</span>
                 <span class="text-gray-500 text-xs">Hệ thống ghi nhận thời gian thực</span>
             </div>
             <div class="text-right text-gray-600 text-xs">
                 <span id="currentDay" class="font-semibold mr-2">Thứ tư – Ngày 05/08/2026</span>
-                <span id="currentTime" class="font-bold text-orange-600 text-sm">15:25:00</span>
+                <span id="currentTime" class="font-bold text-orange-600 text-base">15:25:00</span>
             </div>
         </header>
 
-        <div class="p-4 space-y-3 flex-1">
+        <div class="p-4 space-y-3 flex-1 flex flex-col overflow-y-auto">
             <!-- THÔNG BÁO KHÓA CHỨC NĂNG DÀNH CHO KHÁCH -->
-            <div id="readOnlyWarning" class="hidden bg-amber-50 border-l-4 border-amber-500 p-2.5 rounded-lg text-amber-800 text-[11px] font-bold flex items-center justify-between">
+            <div id="readOnlyWarning" class="hidden bg-amber-50 border-l-4 border-amber-500 p-2.5 rounded-lg text-amber-800 text-xs font-bold flex items-center justify-between shrink-0">
                 <span><i class="fa-solid fa-lock mr-2"></i> Tài khoản Google của bạn chưa được phân quyền thực hiện. Các chức năng Thêm/Sửa/Xóa/Cấp phát đã bị khóa!</span>
             </div>
 
-            <!-- TAB 1: CẤP PHÁT MÁY (DASHBOARD CẤU TRÚC CHUẨN THEO VÙNG KHOANH ĐỎ) -->
-            <div id="tab-dashboard" class="tab-content space-y-3">
+            <!-- TAB 1: CẤP PHÁT MÁY (DASHBOARD) -->
+            <div id="tab-dashboard" class="tab-content flex-1 flex flex-col space-y-3 min-h-0">
                 
-                <!-- HÀNG CÁC THẺ PHÍA TRÊN: BỐ CỤC GRID 12 CỘT -->
-                <div class="grid grid-cols-12 gap-3 items-stretch">
+                <!-- HÀNG CÁC THẺ PHÍA TRÊN -->
+                <div class="grid grid-cols-12 gap-3 flex-1 min-h-0 items-stretch">
                     
-                    <!-- THẺ 1: TRẠNG THÁI KHO (CỘT TRÁI - 2/12 CỘT) -->
-                    <div class="col-span-12 lg:col-span-2 bg-white rounded-xl p-3 shadow-sm border border-gray-200 flex flex-col justify-between">
-                        <div class="flex justify-between items-center border-b pb-1.5">
-                            <span class="font-bold text-gray-700 uppercase text-[11px]">Trạng Thái Kho</span>
-                            <span class="bg-orange-100 text-orange-600 font-bold px-1.5 py-0.5 rounded-full text-[9px]">Realtime</span>
+                    <!-- THẺ 1: TRẠNG THÁI KHO (2/12 CỘT) -->
+                    <div class="col-span-12 lg:col-span-2 bg-white rounded-xl p-3.5 shadow-sm border border-gray-200 flex flex-col justify-between">
+                        <div class="flex justify-between items-center border-b pb-2">
+                            <span class="font-bold text-gray-700 uppercase text-xs">Trạng Thái Kho</span>
+                            <span class="bg-orange-100 text-orange-600 font-bold px-2 py-0.5 rounded-full text-[10px]">Realtime</span>
                         </div>
-                        <div class="space-y-1">
-                            <div class="flex justify-between font-bold text-[11px]"><span>MT93 (Máy mới)</span><span>Còn: 4/54</span></div>
-                            <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden"><div class="bg-red-500 h-full w-[93%]"></div></div>
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between font-bold text-xs"><span>MT93 (Máy mới)</span><span>Còn: 4/54</span></div>
+                            <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden"><div class="bg-red-500 h-full w-[93%]"></div></div>
                         </div>
-                        <div class="flex justify-center py-1">
-                            <div class="radar-box"><div class="radar-circle"></div><i class="fa-solid fa-wifi text-orange-500 text-sm"></i></div>
+                        <div class="flex justify-center py-2">
+                            <div class="radar-box"><div class="radar-circle"></div><i class="fa-solid fa-wifi text-orange-500 text-base"></i></div>
                         </div>
-                        <div class="space-y-1">
-                            <div class="flex justify-between font-bold text-[11px]"><span>MT90 (Máy cũ)</span><span>Còn: 19/23</span></div>
-                            <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden"><div class="bg-blue-500 h-full w-[17%]"></div></div>
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between font-bold text-xs"><span>MT90 (Máy cũ)</span><span>Còn: 19/23</span></div>
+                            <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden"><div class="bg-blue-500 h-full w-[17%]"></div></div>
                         </div>
                     </div>
 
-                    <!-- THẺ 2: OPS ID NHÂN VIÊN (CỘT GIỮA - 4/12 CỘT) -->
-                    <div class="col-span-12 lg:col-span-4 bg-white rounded-xl p-3 shadow-sm border border-gray-200 flex flex-col justify-between space-y-2">
-                        <div class="flex items-center gap-2 border-b pb-1.5">
-                            <span class="w-5 h-5 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-[10px]">1</span>
-                            <h2 class="font-bold uppercase text-[11px] text-gray-800">OPS ID NHÂN VIÊN (MƯỢN / TRẢ HỘ)</h2>
+                    <!-- THẺ 2: OPS ID NHÂN VIÊN (4/12 CỘT) -->
+                    <div class="col-span-12 lg:col-span-4 bg-white rounded-xl p-3.5 shadow-sm border border-gray-200 flex flex-col justify-between space-y-2.5">
+                        <div class="flex items-center gap-2 border-b pb-2">
+                            <span class="w-5 h-5 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">1</span>
+                            <h2 class="font-bold uppercase text-xs text-gray-800">OPS ID NHÂN VIÊN (MƯỢN / TRẢ HỘ)</h2>
                         </div>
                         <div class="flex gap-2">
                             <input type="text" id="scanEmpInput" autofocus placeholder="Quét mã NV (Dùng khi Mượn hoặc Trả hộ)..." class="flex-1 p-2 border border-orange-400 rounded-lg focus:border-orange-600 outline-none font-semibold text-gray-800 text-xs">
                         </div>
-                        <div id="selectedEmpBox" class="border border-orange-200 rounded-lg p-2 bg-orange-50/30 flex-1 flex items-center justify-center min-h-[42px]">
-                            <p class="text-gray-400 text-[11px]">Chưa quét thông tin nhân viên</p>
+                        <div id="selectedEmpBox" class="border border-orange-200 rounded-lg p-2.5 bg-orange-50/30 flex-1 flex items-center justify-center min-h-[50px]">
+                            <p class="text-gray-400 text-xs">Chưa quét thông tin nhân viên</p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Team</label>
-                                <input type="text" id="displayEmpTeam" readonly placeholder="Team..." class="w-full p-1.5 border border-gray-300 rounded-lg bg-gray-50 font-semibold text-gray-700 outline-none text-[11px]">
+                                <label class="block text-[11px] font-bold text-gray-500 uppercase mb-0.5">Team</label>
+                                <input type="text" id="displayEmpTeam" readonly placeholder="Team..." class="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 font-semibold text-gray-700 outline-none text-xs">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Supervisor Direct</label>
-                                <input type="text" id="displayEmpSup" readonly placeholder="Supervisor..." class="w-full p-1.5 border border-gray-300 rounded-lg bg-gray-50 font-semibold text-gray-700 outline-none text-[11px]">
+                                <label class="block text-[11px] font-bold text-gray-500 uppercase mb-0.5">Supervisor Direct</label>
+                                <input type="text" id="displayEmpSup" readonly placeholder="Supervisor..." class="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 font-semibold text-gray-700 outline-none text-xs">
                             </div>
                         </div>
                     </div>
 
-                    <!-- THẺ 3: QUÉT NHIỀU PDA CÙNG LÚC (CỘT PHẢI - 6/12 CỘT) -->
-                    <div class="col-span-12 lg:col-span-6 bg-white rounded-xl p-3 shadow-sm border border-gray-200 flex flex-col justify-between space-y-2">
-                        <div class="flex items-center gap-2 border-b pb-1.5">
-                            <span class="w-5 h-5 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-[10px]">2</span>
-                            <h2 class="font-bold uppercase text-[11px] text-gray-800">Quét Nhiều PDA Cùng Lúc</h2>
+                    <!-- THẺ 3: QUÉT NHIỀU PDA CÙNG LÚC (6/12 CỘT) -->
+                    <div class="col-span-12 lg:col-span-6 bg-white rounded-xl p-3.5 shadow-sm border border-gray-200 flex flex-col justify-between space-y-2.5">
+                        <div class="flex items-center gap-2 border-b pb-2">
+                            <span class="w-5 h-5 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">2</span>
+                            <h2 class="font-bold uppercase text-xs text-gray-800">Quét Nhiều PDA Cùng Lúc</h2>
                         </div>
                         
                         <div class="grid grid-cols-2 gap-2">
-                            <div class="border-2 border-emerald-400 border-dashed rounded-lg p-1.5 bg-emerald-50/20">
-                                <span class="font-bold text-emerald-700 block mb-0.5 text-[10px]">MƯỢN NHIỀU MÁY</span>
-                                <input type="text" id="borrowPdaInput" placeholder="Quét mã PDA mượn..." class="w-full p-1.5 border rounded bg-white outline-none font-bold text-[11px]">
+                            <div class="border-2 border-emerald-400 border-dashed rounded-lg p-2 bg-emerald-50/20">
+                                <span class="font-bold text-emerald-700 block mb-0.5 text-xs">MƯỢN NHIỀU MÁY</span>
+                                <input type="text" id="borrowPdaInput" placeholder="Quét mã PDA mượn..." class="w-full p-2 border rounded bg-white outline-none font-bold text-xs">
                             </div>
-                            <div class="border-2 border-amber-300 border-dashed rounded-lg p-1.5 bg-amber-50/20">
-                                <span class="font-bold text-amber-700 block mb-0.5 text-[10px]">TRẢ NHIỀU MÁY</span>
-                                <input type="text" id="returnPdaInput" placeholder="Quét mã PDA trả..." class="w-full p-1.5 border rounded bg-white outline-none font-bold text-[11px]">
+                            <div class="border-2 border-amber-300 border-dashed rounded-lg p-2 bg-amber-50/20">
+                                <span class="font-bold text-amber-700 block mb-0.5 text-xs">TRẢ NHIỀU MÁY</span>
+                                <input type="text" id="returnPdaInput" placeholder="Quét mã PDA trả..." class="w-full p-2 border rounded bg-white outline-none font-bold text-xs">
                             </div>
                         </div>
 
-                        <div>
-                            <div class="flex justify-between items-center text-[11px] font-bold text-gray-600 mb-1">
+                        <div class="flex-1 flex flex-col justify-center">
+                            <div class="flex justify-between items-center text-xs font-bold text-gray-600 mb-1">
                                 <span>Danh sách PDA vừa quét (<span id="pendingCount">0</span>):</span>
                                 <button onclick="clearPendingList()" class="text-red-500 hover:underline">Xóa tất cả</button>
                             </div>
-                            <div id="pendingPdaList" class="flex flex-col gap-1 min-h-[40px] max-h-[80px] overflow-y-auto p-1.5 border rounded-lg bg-gray-50">
-                                <span class="text-gray-400 text-[11px] italic">Chưa quét mã PDA nào...</span>
+                            <div id="pendingPdaList" class="flex flex-col gap-1 min-h-[45px] max-h-[90px] overflow-y-auto p-2 border rounded-lg bg-gray-50">
+                                <span class="text-gray-400 text-xs italic">Chưa quét mã PDA nào...</span>
                             </div>
                         </div>
 
-                        <button id="btnConfirm" onclick="processBatchTransaction()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-lg transition-all shadow disabled:opacity-50 disabled:cursor-not-allowed text-xs">
+                        <button id="btnConfirm" onclick="processBatchTransaction()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg transition-all shadow disabled:opacity-50 disabled:cursor-not-allowed text-xs">
                             XÁC NHẬN CẤP / TRẢ TẤT CẢ
                         </button>
                     </div>
                 </div>
 
-                <!-- THẺ HOÀN TOÀN BÊN DƯỚI: PDA CHƯA TRẢ REALTIME TRACKER (MỞ RỘNG TOÀN CHIỀU NGANG) -->
-                <div class="bg-white rounded-xl p-3.5 shadow-sm border border-gray-200">
+                <!-- THẺ HOÀN TOÀN BÊN DƯỚI: PDA CHƯA TRẢ REALTIME TRACKER -->
+                <div class="bg-white rounded-xl p-3.5 shadow-sm border border-gray-200 shrink-0">
                     <div class="flex justify-between items-center mb-2 pb-1.5 border-b">
-                        <h3 class="font-bold text-gray-700 uppercase flex items-center gap-2 text-[11px]">
+                        <h3 class="font-bold text-gray-700 uppercase flex items-center gap-2 text-xs">
                             <i class="fa-solid fa-list-ul text-orange-500"></i> PDA Chưa Trả Realtime Tracker
                         </h3>
-                        <span class="text-[10px] font-semibold text-gray-400">Tự động cập nhật tức thì</span>
+                        <span class="text-xs font-semibold text-gray-400">Tự động cập nhật tức thì</span>
                     </div>
                     
-                    <div class="overflow-x-auto max-h-[220px] overflow-y-auto rounded-lg border border-gray-100">
+                    <div class="overflow-x-auto max-h-[160px] overflow-y-auto rounded-lg border border-gray-100">
                         <table class="w-full text-left border-collapse relative">
-                            <thead class="bg-gray-100 text-gray-600 font-bold text-[10px] uppercase sticky top-0 z-10 shadow-sm">
+                            <thead class="bg-gray-100 text-gray-600 font-bold text-xs uppercase sticky top-0 z-10 shadow-sm">
                                 <tr>
                                     <th class="p-2.5">MÃ PDA</th>
                                     <th class="p-2.5">LOẠI</th>
@@ -247,7 +293,7 @@
                                     <th class="p-2.5 text-right">THAO TÁC</th>
                                 </tr>
                             </thead>
-                            <tbody id="unreturnedMiniTable" class="divide-y divide-gray-100 text-[11px]"></tbody>
+                            <tbody id="unreturnedMiniTable" class="divide-y divide-gray-100 text-xs"></tbody>
                         </table>
                     </div>
                 </div>
@@ -256,12 +302,12 @@
             <!-- TAB 2: UNRETURNED LIST -->
             <div id="tab-unreturned" class="tab-content hidden bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                 <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-sm font-bold text-gray-800 uppercase">Unreturned List (Danh Sách PDA Chưa Trả)</h2>
-                    <input type="text" id="searchUnreturned" placeholder="Tìm theo mã máy, tên NV, Ops ID..." class="p-1.5 border rounded-lg w-72 text-xs">
+                    <h2 class="text-base font-bold text-gray-800 uppercase">Unreturned List (Danh Sách PDA Chưa Trả)</h2>
+                    <input type="text" id="searchUnreturned" placeholder="Tìm theo mã máy, tên NV, Ops ID..." class="p-2 border rounded-lg w-72 text-xs">
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-800 text-white font-bold text-[11px]">
+                        <thead class="bg-slate-800 text-white font-bold text-xs">
                             <tr>
                                 <th class="p-2.5">Mã Thiết Bị</th>
                                 <th class="p-2.5">Loại</th>
@@ -284,13 +330,13 @@
                 <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                     <div class="flex justify-between items-center mb-3 border-b pb-2">
                         <div>
-                            <h2 class="text-sm font-bold text-gray-800 uppercase flex items-center gap-2">
+                            <h2 class="text-base font-bold text-gray-800 uppercase flex items-center gap-2">
                                 <i class="fa-solid fa-chart-pie text-purple-600"></i> Bảng Pivot Thống Kê Theo Supervisor
                             </h2>
-                            <p class="text-[11px] text-gray-500 mt-0.5">Nhấp vào tên nhân viên để xem chi tiết danh sách máy đang giữ</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Nhấp vào tên nhân viên để xem chi tiết danh sách máy đang giữ</p>
                         </div>
                         <div class="bg-purple-50 text-purple-700 font-bold px-2.5 py-1 rounded-lg border border-purple-200 text-xs">
-                            Tổng PDA Chưa Trả: <span id="pivotTotalPdas" class="text-purple-900 text-xs font-bold">0</span>
+                            Tổng PDA Chưa Trả: <span id="pivotTotalPdas" class="text-purple-900 text-sm font-bold">0</span>
                         </div>
                     </div>
                     <div id="pivotContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
@@ -300,12 +346,12 @@
             <!-- TAB 3: LOGS NHẬT KÝ -->
             <div id="tab-logs" class="tab-content hidden bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                 <div class="flex justify-between items-center mb-3 border-b pb-2">
-                    <h2 class="text-sm font-bold text-gray-800 uppercase">LOGS NHẬT KÝ MƯỢN / TRẢ</h2>
-                    <span class="text-[11px] text-gray-500 font-semibold"><i class="fa-solid fa-arrow-down-wide-short text-orange-500 mr-1"></i> Sắp xếp: Mới nhất ➔ Cũ nhất</span>
+                    <h2 class="text-base font-bold text-gray-800 uppercase">LOGS NHẬT KÝ MƯỢN / TRẢ</h2>
+                    <span class="text-xs text-gray-500 font-semibold"><i class="fa-solid fa-arrow-down-wide-short text-orange-500 mr-1"></i> Sắp xếp: Mới nhất ➔ Cũ nhất</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-100 text-gray-700 font-bold border-b text-[11px]">
+                        <thead class="bg-slate-100 text-gray-700 font-bold border-b text-xs">
                             <tr>
                                 <th class="p-2.5">Timestamp</th>
                                 <th class="p-2.5">Mã PDA</th>
@@ -327,45 +373,45 @@
                 <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 shadow-sm border border-emerald-200 space-y-2">
                     <div class="flex justify-between items-center">
                         <div>
-                            <h2 class="text-sm font-bold text-emerald-900 uppercase">
+                            <h2 class="text-base font-bold text-emerald-900 uppercase">
                                 <i class="fa-solid fa-file-excel text-emerald-600 mr-2"></i> Nhập Nhân Viên Hàng Loạt (Bulk Import)
                             </h2>
-                            <p class="text-[11px] text-emerald-700 mt-0.5">Tải file .xlsx hoặc .csv để thêm dữ liệu vào hệ thống</p>
+                            <p class="text-xs text-emerald-700 mt-0.5">Tải file .xlsx hoặc .csv để thêm dữ liệu vào hệ thống</p>
                         </div>
                     </div>
                     <div class="bg-white p-3 rounded-lg border border-emerald-200 md:w-1/2">
                         <label class="block font-bold text-gray-700 mb-1 text-xs">Chọn file Excel / CSV</label>
-                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="block w-full text-[11px] text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200 cursor-pointer disabled:opacity-50">
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200 cursor-pointer disabled:opacity-50">
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                    <h2 class="text-sm font-bold text-gray-800 uppercase mb-2">Thêm Hoặc Cập Nhật Lẻ 1 Nhân Viên</h2>
+                    <h2 class="text-base font-bold text-gray-800 uppercase mb-2">Thêm Hoặc Cập Nhật Lẻ 1 Nhân Viên</h2>
                     <form id="empForm" onsubmit="saveEmployee(event)" class="grid grid-cols-6 gap-2">
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-[11px]">Ops ID / Mã NV</label>
+                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Ops ID / Mã NV</label>
                             <input type="text" id="empOpsId" required placeholder="Ops2120" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500 bg-orange-50 font-bold text-xs">
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-[11px]">Họ và Tên</label>
+                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Họ và Tên</label>
                             <input type="text" id="empName" required placeholder="BÙI VĂN VĨ" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500 font-semibold text-xs">
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-[11px]">Email</label>
+                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Email</label>
                             <input type="email" id="empEmail" placeholder="vi.buivan@spxexpress.com" class="w-full p-2 border rounded-lg outline-none focus:border-orange-500 text-xs">
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-[11px]">Team</label>
+                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Team</label>
                             <input type="text" id="empTeam" list="teamOptions" placeholder="Chọn / Nhập Team..." class="w-full p-2 border border-orange-300 rounded-lg outline-none focus:border-orange-600 bg-white font-semibold text-xs">
                             <datalist id="teamOptions"></datalist>
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-[11px]">Supervisor Direct</label>
+                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Supervisor Direct</label>
                             <input type="text" id="empSup" list="supOptions" required placeholder="Chọn / Nhập Sup..." class="w-full p-2 border border-orange-300 rounded-lg outline-none focus:border-orange-600 bg-white font-semibold text-xs">
                             <datalist id="supOptions"></datalist>
                         </div>
                         <div class="flex items-end">
-                            <button type="submit" id="btnSaveEmp" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold p-2 rounded-lg transition-all shadow-md disabled:opacity-50 text-xs">
+                            <button type="submit" id="btnSaveEmp" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold p-2.5 rounded-lg transition-all shadow-md disabled:opacity-50 text-xs">
                                 <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Nhân Viên
                             </button>
                         </div>
@@ -375,23 +421,23 @@
                 <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                     <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
                         <div class="flex items-center gap-2">
-                            <h2 class="text-sm font-bold text-gray-800 uppercase">Danh Sách Nhân Viên (<span id="empCount">0</span>)</h2>
-                            <button id="btnDeleteSelectedEmp" onclick="deleteSelectedEmployees()" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all flex items-center gap-1 disabled:opacity-50">
+                            <h2 class="text-base font-bold text-gray-800 uppercase">Danh Sách Nhân Viên (<span id="empCount">0</span>)</h2>
+                            <button id="btnDeleteSelectedEmp" onclick="deleteSelectedEmployees()" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-bold px-2.5 py-1 rounded-lg text-xs transition-all flex items-center gap-1 disabled:opacity-50">
                                 <i class="fa-solid fa-trash-can"></i> Xóa Đã Chọn
                             </button>
-                            <button id="btnDeleteAllEmp" onclick="deleteAllEmployees()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all flex items-center gap-1 shadow-sm disabled:opacity-50">
+                            <button id="btnDeleteAllEmp" onclick="deleteAllEmployees()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 py-1 rounded-lg text-xs transition-all flex items-center gap-1 shadow-sm disabled:opacity-50">
                                 <i class="fa-solid fa-triangle-exclamation"></i> Xóa Tất Cả CSDL
                             </button>
                         </div>
                         <div class="relative">
-                            <i class="fa-solid fa-search absolute left-2.5 top-2 text-gray-400 text-xs"></i>
+                            <i class="fa-solid fa-search absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
                             <input type="text" id="searchEmp" placeholder="Tìm theo Tên, Ops ID, Team, Sup..." class="pl-8 p-1.5 border border-orange-300 focus:border-orange-600 outline-none rounded-lg w-72 text-xs font-semibold">
                         </div>
                     </div>
 
                     <div class="overflow-x-auto max-h-[450px] overflow-y-auto">
                         <table class="w-full text-left relative">
-                            <thead class="bg-gray-100 text-gray-600 sticky top-0 shadow-sm z-10 font-bold text-[11px]">
+                            <thead class="bg-gray-100 text-gray-600 sticky top-0 shadow-sm z-10 font-bold text-xs">
                                 <tr>
                                     <th class="p-2 text-center w-8">
                                         <input type="checkbox" id="selectAllEmp" onclick="toggleSelectAllEmployees(this)" class="w-3.5 h-3.5 rounded cursor-pointer accent-orange-600">
@@ -415,27 +461,27 @@
                 <div class="bg-white rounded-xl p-4 shadow-sm border border-red-200">
                     <div class="flex items-center gap-2 mb-2.5 border-b pb-2 text-red-700">
                         <i class="fa-solid fa-user-shield text-lg"></i>
-                        <h2 class="text-sm font-bold uppercase">QUẢN LÝ QUYỀN ĐĂNG NHẬP & NGƯỜI THỰC HIỆN</h2>
+                        <h2 class="text-base font-bold uppercase">QUẢN LÝ QUYỀN ĐĂNG NHẬP & NGƯỜI THỰC HIỆN</h2>
                     </div>
 
                     <form id="adminForm" onsubmit="saveAdminUser(event)" class="grid grid-cols-4 gap-2 mb-4">
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-[11px]">Email Google được phép</label>
+                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Email Google được phép</label>
                             <input type="email" id="adminEmail" required placeholder="hung.ha@spxexpress.com" class="w-full p-2 border rounded-lg outline-none focus:border-red-500 font-semibold text-xs">
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-[11px]">Tên Người Thực Hiện (Hiển thị Logs)</label>
+                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Tên Người Thực Hiện (Hiển thị Logs)</label>
                             <input type="text" id="adminDisplayName" required placeholder="HÀ VIỆT HÙNG" class="w-full p-2 border rounded-lg outline-none focus:border-red-500 font-bold text-xs">
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-600 mb-1 text-[11px]">Cấp Quyền Super Admin?</label>
+                            <label class="block font-semibold text-gray-600 mb-1 text-xs">Cấp Quyền Super Admin?</label>
                             <select id="adminIsSuper" class="w-full p-2 border rounded-lg outline-none focus:border-red-500 font-semibold bg-white text-xs">
                                 <option value="false">Không (Chỉ có quyền Thực hiện)</option>
                                 <option value="true">Có (Xem thẻ Quyền Admin)</option>
                             </select>
                         </div>
                         <div class="flex items-end">
-                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold p-2 rounded-lg transition-all shadow-md text-xs">
+                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold p-2.5 rounded-lg transition-all shadow-md text-xs">
                                 <i class="fa-solid fa-plus mr-1"></i> Cấp Quyền Cho Email
                             </button>
                         </div>
@@ -443,7 +489,7 @@
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
-                            <thead class="bg-slate-900 text-white font-bold text-[11px]">
+                            <thead class="bg-slate-900 text-white font-bold text-xs">
                                 <tr>
                                     <th class="p-2.5">Email Google</th>
                                     <th class="p-2.5">Tên Người Thực Hiện</th>
@@ -501,6 +547,7 @@
         let employeeCache = [];
         let unreturnedCache = [];
         let currentModalPdaCodes = [];
+        let customConfirmResolver = null;
 
         // KHỞI TẠO XÁC THỰC AUTHENTICATION GOOGLE
         const { signInWithPopup, signOut, onAuthStateChanged } = window.authMethods;
@@ -512,7 +559,7 @@
                 await signInWithPopup(auth, provider);
             } catch (err) {
                 console.error("Lỗi đăng nhập:", err);
-                alert(`❌ Đăng nhập không thành công!\nChi tiết lỗi: ${err.code || err.message}`);
+                showToast(`Đăng nhập thất bại: ${err.message}`, 'error');
             }
         };
 
@@ -532,6 +579,101 @@
                 currentUser = null;
                 loginOverlay.classList.remove('hidden');
             }
+        });
+
+        // 1. HỆ THỐNG THÔNG BÁO TOAST MỚI (CẠNH MÀN HÌNH CHẤT LƯỢNG CAO)
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bgStyle = 'bg-slate-900 text-white border-slate-700';
+            let icon = '<i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>';
+
+            if (type === 'success') {
+                bgStyle = 'bg-emerald-900 text-white border-emerald-700';
+                icon = '<i class="fa-solid fa-circle-check text-emerald-300 text-lg"></i>';
+            } else if (type === 'error') {
+                bgStyle = 'bg-red-900 text-white border-red-700';
+                icon = '<i class="fa-solid fa-triangle-exclamation text-red-300 text-lg"></i>';
+            } else if (type === 'warning') {
+                bgStyle = 'bg-amber-900 text-white border-amber-700';
+                icon = '<i class="fa-solid fa-triangle-exclamation text-amber-300 text-lg"></i>';
+            }
+
+            toast.className = `${bgStyle} border p-3.5 rounded-xl shadow-2xl flex items-center gap-3 text-xs font-semibold toast-animate pointer-events-auto`;
+            toast.innerHTML = `
+                ${icon}
+                <span class="flex-1 leading-tight">${message}</span>
+                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-white font-bold ml-2">✕</button>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                if (toast.parentElement) toast.remove();
+            }, 3500);
+        };
+
+        // 2. CUSTOM DIALOG TÙY CHỈNH NỘI BỘ THAY THẾ CONFIRM() CỦA TRÌNH DUYỆT
+        window.showCustomConfirm = function(title, message, isDanger = false) {
+            return new Promise((resolve) => {
+                customConfirmResolver = resolve;
+                document.getElementById('confirmTitle').innerText = title;
+                document.getElementById('confirmMessage').innerText = message;
+                
+                const btnOk = document.getElementById('btnConfirmOk');
+                if (isDanger) {
+                    btnOk.className = 'px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm transition-all';
+                } else {
+                    btnOk.className = 'px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm transition-all';
+                }
+
+                document.getElementById('customConfirmModal').classList.remove('hidden');
+            });
+        };
+
+        window.closeCustomConfirm = function(result) {
+            document.getElementById('customConfirmModal').classList.add('hidden');
+            if (customConfirmResolver) {
+                customConfirmResolver(result);
+                customConfirmResolver = null;
+            }
+        };
+
+        // 3. BỘ KIỂM TRA PHÁT HIỆN BỘ GÕ TIẾNG VIỆT & TỪ CHỐI TRUY CẬP
+        function setupVietnameseDetector(inputElement) {
+            let isComposing = false;
+
+            inputElement.addEventListener('compositionstart', () => {
+                isComposing = true;
+                triggerVietnameseBlock(inputElement);
+            });
+
+            inputElement.addEventListener('input', () => {
+                const val = inputElement.value;
+                const hasVietnamese = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i.test(val);
+                if (hasVietnamese || isComposing) {
+                    triggerVietnameseBlock(inputElement);
+                }
+            });
+        }
+
+        function triggerVietnameseBlock(inputElement) {
+            inputElement.value = '';
+            inputElement.blur();
+            document.getElementById('vietnameseWarningModal').classList.remove('hidden');
+        }
+
+        window.closeVietnameseModal = function() {
+            document.getElementById('vietnameseWarningModal').classList.add('hidden');
+            const scanInput = document.getElementById('scanEmpInput');
+            if (scanInput) scanInput.focus();
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            ['scanEmpInput', 'borrowPdaInput', 'returnPdaInput'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) setupVietnameseDetector(el);
+            });
         });
 
         // HÀM KIỂM TRA PHÂN QUYỀN
@@ -567,12 +709,12 @@
                     currentUserRole = 'superadmin';
                     navAdminBtn.classList.remove('hidden');
                     userRoleBadge.innerText = 'Role: Super Admin';
-                    userRoleBadge.className = 'inline-block bg-red-900 text-red-200 px-2 py-0.5 rounded text-[9px] font-bold';
+                    userRoleBadge.className = 'inline-block bg-red-900 text-red-200 px-2 py-0.5 rounded text-[10px] font-bold';
                 } else {
                     currentUserRole = 'executor';
                     navAdminBtn.classList.add('hidden');
                     userRoleBadge.innerText = 'Role: Người Thực Hiện';
-                    userRoleBadge.className = 'inline-block bg-emerald-900 text-emerald-200 px-2 py-0.5 rounded text-[9px] font-bold';
+                    userRoleBadge.className = 'inline-block bg-emerald-900 text-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold';
                 }
 
                 readOnlyWarning.classList.add('hidden');
@@ -584,7 +726,7 @@
                 navAdminBtn.classList.add('hidden');
 
                 userRoleBadge.innerText = 'Role: Khách (Chỉ Xem)';
-                userRoleBadge.className = 'inline-block bg-amber-900 text-amber-200 px-2 py-0.5 rounded text-[9px] font-bold';
+                userRoleBadge.className = 'inline-block bg-amber-900 text-amber-200 px-2 py-0.5 rounded text-[10px] font-bold';
 
                 readOnlyWarning.classList.remove('hidden');
                 setFormControlsState(false);
@@ -622,11 +764,11 @@
 
             try {
                 await addDoc(collection(db, "admin_users"), { email, displayName, isSuper });
-                alert(`✅ Đã cấp quyền thành công cho [${email}]!`);
+                showToast(`Đã cấp quyền thành công cho [${email}]!`);
                 document.getElementById('adminForm').reset();
             } catch (err) {
                 console.error(err);
-                alert("❌ Lỗi khi thêm admin!");
+                showToast("Lỗi khi thêm admin!", 'error');
             }
         };
 
@@ -636,11 +778,11 @@
 
             tbody.innerHTML = list.map(item => `
                 <tr class="hover:bg-gray-50 border-b border-gray-100">
-                    <td class="p-2 font-bold text-gray-800">${item.email}</td>
-                    <td class="p-2 font-bold text-orange-600">${item.displayName}</td>
-                    <td class="p-2">${(item.isSuper === true || item.isSuper === "true") ? '<span class="bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded text-[10px]">Super Admin</span>' : '<span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[10px]">Người Thực Hiện</span>'}</td>
-                    <td class="p-2 text-center">
-                        <button onclick="deleteAdminUser('${item.id}', '${item.email}')" class="bg-red-50 text-red-600 hover:bg-red-100 px-2.5 py-1 rounded font-bold text-[11px] transition-all">Xóa Quyền</button>
+                    <td class="p-2.5 font-bold text-gray-800">${item.email}</td>
+                    <td class="p-2.5 font-bold text-orange-600">${item.displayName}</td>
+                    <td class="p-2.5">${(item.isSuper === true || item.isSuper === "true") ? '<span class="bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded text-xs">Super Admin</span>' : '<span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs">Người Thực Hiện</span>'}</td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="deleteAdminUser('${item.id}', '${item.email}')" class="bg-red-50 text-red-600 hover:bg-red-100 px-2.5 py-1 rounded font-bold text-xs transition-all">Xóa Quyền</button>
                     </td>
                 </tr>
             `).join('');
@@ -648,23 +790,24 @@
 
         window.deleteAdminUser = async function(id, email) {
             if (currentUserRole !== 'superadmin') return;
-            if (!confirm(`Xác nhận xóa quyền của email [${email}]?`)) return;
+            const confirmDelete = await showCustomConfirm("Xóa quyền Admin", `Bạn có chắc muốn xóa quyền của email [${email}]?`, true);
+            if (!confirmDelete) return;
 
             const { doc, deleteDoc } = window.fs;
             const db = window.db;
 
             try {
                 await deleteDoc(doc(db, "admin_users", id));
-                alert("✅ Đã xóa quyền thành công!");
+                showToast("Đã xóa quyền admin thành công!");
             } catch (err) {
                 console.error(err);
-                alert("❌ Có lỗi xảy ra!");
+                showToast("Có lỗi xảy ra khi xóa quyền!", 'error');
             }
         };
 
         window.switchTab = function(tabName) {
             if (tabName === 'admin' && currentUserRole !== 'superadmin') {
-                alert("⚠️ Bạn không có quyền truy cập vào khu vực Bảo Mật!");
+                showToast("Bạn không có quyền truy cập vào khu vực Bảo Mật!", 'warning');
                 return;
             }
 
@@ -672,9 +815,9 @@
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
 
             document.querySelectorAll('nav button').forEach(btn => {
-                btn.className = "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-xs";
+                btn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold hover:bg-slate-800 hover:text-white transition-all text-sm";
             });
-            document.getElementById(`nav-${tabName}`).className = "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg font-semibold bg-orange-500 text-white transition-all text-xs";
+            document.getElementById(`nav-${tabName}`).className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold bg-orange-500 text-white transition-all text-sm";
         };
 
         function detectDeviceType(code) {
@@ -692,11 +835,11 @@
 
         function renderDeviceBadge(type) {
             if (type === 'Súng Scan') {
-                return `<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Súng Scan</span>`;
+                return `<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full text-xs">Súng Scan</span>`;
             } else if (type === 'Máy cũ') {
-                return `<span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Máy cũ</span>`;
+                return `<span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full text-xs">Máy cũ</span>`;
             }
-            return `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Máy mới</span>`;
+            return `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-xs">Máy mới</span>`;
         }
 
         setInterval(() => {
@@ -814,9 +957,9 @@
                         <div class="flex justify-between items-center w-full">
                             <div>
                                 <p class="font-bold text-gray-800 text-xs">${empData.empName}</p>
-                                <p class="text-gray-500 font-bold text-[10px]">Mã NV: <span class="text-orange-600 font-bold">${empData.opsId}</span></p>
+                                <p class="text-gray-500 font-bold text-[11px]">Mã NV: <span class="text-orange-600 font-bold">${empData.opsId}</span></p>
                             </div>
-                            <span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded text-[10px]">✓ Đã chọn NV</span>
+                            <span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded text-[11px]">✓ Đã chọn NV</span>
                         </div>
                     `;
                     empTeamInput.value = empData.team || 'N/A';
@@ -824,7 +967,7 @@
                 } else {
                     selectedEmployee = null;
                     empBox.innerHTML = `
-                        <div class="text-red-500 font-bold text-[11px]">
+                        <div class="text-red-500 font-bold text-xs">
                             ⚠️ Không tìm thấy Ops ID "${opsId}". Vui lòng kiểm tra lại!
                         </div>
                     `;
@@ -875,7 +1018,7 @@
                     const activeRecord = unreturnedCache.find(item => item.pdaCode.toLowerCase() === code.toLowerCase());
 
                     if (!activeRecord) {
-                        alert(`❌ Mã ${code} hiện KHÔNG nằm trong danh sách đang mượn!`);
+                        showToast(`Mã ${code} KHÔNG nằm trong danh sách đang mượn!`, 'warning');
                         returnPdaInput.value = '';
                         return;
                     }
@@ -895,9 +1038,9 @@
                                 <div class="flex justify-between items-center w-full">
                                     <div>
                                         <p class="font-bold text-amber-800 text-xs"><i class="fa-solid fa-arrow-rotate-left mr-1"></i> ${activeRecord.empName}</p>
-                                        <p class="text-gray-500 font-bold text-[10px]">Mã NV: <span class="text-orange-600 font-bold">${activeRecord.opsId}</span></p>
+                                        <p class="text-gray-500 font-bold text-[11px]">Mã NV: <span class="text-orange-600 font-bold">${activeRecord.opsId}</span></p>
                                     </div>
-                                    <span class="bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded text-[10px]">Auto Người Trả</span>
+                                    <span class="bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded text-[11px]">Auto Người Trả</span>
                                 </div>
                             `;
                             empTeamInput.value = activeRecord.team || 'N/A';
@@ -917,7 +1060,7 @@
             document.getElementById('pendingCount').innerText = totalCount;
 
             if (totalCount === 0) {
-                container.innerHTML = `<span class="text-gray-400 text-[11px] italic">Chưa quét mã PDA nào...</span>`;
+                container.innerHTML = `<span class="text-gray-400 text-xs italic">Chưa quét mã PDA nào...</span>`;
                 return;
             }
 
@@ -925,8 +1068,8 @@
             pendingBorrowPdaList.forEach((code, index) => {
                 const devType = detectDeviceType(code);
                 html += `
-                    <div class="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2 py-1 rounded flex justify-between items-center">
-                        <span>[MƯỢN] ${code} <span class="text-[9px] bg-emerald-200 text-emerald-900 px-1 rounded ml-1">${devType}</span></span>
+                    <div class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded flex justify-between items-center">
+                        <span>[MƯỢN] ${code} <span class="text-[10px] bg-emerald-200 text-emerald-900 px-1 rounded ml-1">${devType}</span></span>
                         <button onclick="removePending('borrow', ${index})" class="text-emerald-600 hover:text-red-600 font-extrabold text-xs ml-2">×</button>
                     </div>
                 `;
@@ -939,10 +1082,10 @@
                 }
 
                 html += `
-                    <div class="bg-amber-100 text-amber-900 text-[11px] px-2 py-1 rounded flex justify-between items-center border border-amber-200">
+                    <div class="bg-amber-100 text-amber-900 text-xs px-2 py-1 rounded flex justify-between items-center border border-amber-200">
                         <div>
                             <span class="font-bold text-amber-800">[TRẢ] ${item.code}</span>
-                            <span class="ml-1.5 text-gray-600 text-[10px]">${extraInfo}</span>
+                            <span class="ml-1.5 text-gray-600 text-[11px]">${extraInfo}</span>
                         </div>
                         <button onclick="removePending('return', ${index})" class="text-amber-700 hover:text-red-600 font-extrabold text-xs ml-2">×</button>
                     </div>
@@ -964,20 +1107,20 @@
             renderPendingList();
         };
 
-        // TỐI ƯU HÓA BATCH GHI NHẬN TỨC THÌ (WRITEBATCH)
+        // TỐI ƯU HÓA BATCH GHI NHẬN TỨC THÌ (SỬ DỤNG TOAST KHÔNG HIỆN ALERT POPUP)
         window.processBatchTransaction = async function() {
             if (currentUserRole === 'guest') {
-                alert("🔒 Tài khoản của bạn chưa được cấp quyền thao tác!");
+                showToast("Tài khoản của bạn chưa được cấp quyền thao tác!", 'warning');
                 return;
             }
 
             if (pendingBorrowPdaList.length === 0 && pendingReturnPdaList.length === 0) {
-                alert("⚠️ Hãy quét ít nhất 1 mã PDA/Súng Scan để cấp mượn hoặc thu hồi!");
+                showToast("Hãy quét ít nhất 1 mã PDA để cấp mượn hoặc thu hồi!", 'warning');
                 return;
             }
 
             if (pendingBorrowPdaList.length > 0 && !selectedEmployee) {
-                alert("⚠️ Vui lòng quét Ops ID nhân viên mượn máy trước khi cấp!");
+                showToast("Vui lòng quét Ops ID nhân viên mượn máy trước khi cấp!", 'warning');
                 return;
             }
 
@@ -1000,7 +1143,7 @@
                     const qCheck = query(collection(db, "unreturned"), where("pdaCode", "==", borrowPda));
                     const snapCheck = await getDocs(qCheck);
                     if (!snapCheck.empty) {
-                        alert(`❌ Mã ${borrowPda} đang ở trạng thái CHƯA TRẢ! Bỏ qua mã này.`);
+                        showToast(`Mã ${borrowPda} đang ở trạng thái CHƯA TRẢ! Bỏ qua mã này.`, 'warning');
                         continue;
                     }
 
@@ -1085,13 +1228,13 @@
                 document.getElementById('displayEmpTeam').value = '';
                 document.getElementById('displayEmpSup').value = '';
                 selectedEmployee = null;
-                document.getElementById('selectedEmpBox').innerHTML = `<p class="text-gray-400 text-[11px]">Chưa quét thông tin nhân viên</p>`;
+                document.getElementById('selectedEmpBox').innerHTML = `<p class="text-gray-400 text-xs">Chưa quét thông tin nhân viên</p>`;
                 scanEmpInput.focus();
 
-                alert("⚡ Đã ghi nhận thành công tất cả thao tác mượn/trả!");
+                showToast("⚡ Cấp / Thu hồi thiết bị thành công!");
             } catch (err) {
                 console.error("Lỗi khi ghi nhận batch: ", err);
-                alert("❌ Có lỗi xảy ra khi lưu dữ liệu hàng loạt!");
+                showToast("Có lỗi xảy ra khi lưu dữ liệu hàng loạt!", 'error');
             } finally {
                 btnConfirm.disabled = false;
                 btnConfirm.innerHTML = `XÁC NHẬN CẤP / TRẢ TẤT CẢ`;
@@ -1143,10 +1286,10 @@
                         <tr onclick="openEmpDetailsModal('${opsId}')" class="hover:bg-purple-50/60 cursor-pointer transition-all border-b border-gray-100">
                             <td class="p-2">
                                 <div class="font-bold text-gray-800 text-xs">${emp.empName}</div>
-                                <div class="text-[10px] font-bold text-gray-400">${emp.opsId}</div>
+                                <div class="text-[11px] font-bold text-gray-400">${emp.opsId}</div>
                             </td>
                             <td class="p-2 text-right font-bold">
-                                <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-[10px] hover:bg-purple-200">${count} thiết bị</span>
+                                <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs hover:bg-purple-200">${count} thiết bị</span>
                             </td>
                         </tr>
                     `;
@@ -1159,11 +1302,11 @@
                                 <i class="fa-solid fa-user-tie text-orange-400 text-xs"></i>
                                 <span class="font-bold text-xs">${supName}</span>
                             </div>
-                            <span class="bg-orange-500 text-white font-extrabold px-2 py-0.5 rounded-full text-[10px]">${supTotalPda} Thiết Bị</span>
+                            <span class="bg-orange-500 text-white font-extrabold px-2 py-0.5 rounded-full text-xs">${supTotalPda} Thiết Bị</span>
                         </div>
                         <div class="p-1.5">
                             <table class="w-full text-left border-collapse">
-                                <thead class="text-[10px] text-gray-400 uppercase font-bold border-b">
+                                <thead class="text-xs text-gray-400 uppercase font-bold border-b">
                                     <tr>
                                         <th class="p-1.5">Nhân viên</th>
                                         <th class="p-1.5 text-right">Số lượng</th>
@@ -1203,7 +1346,7 @@
                                 <span class="font-extrabold text-orange-600 text-sm">${item.pdaCode}</span>
                                 ${renderDeviceBadge(devType)}
                             </div>
-                            <p class="text-[11px] text-gray-500 mt-1"><i class="fa-regular fa-clock mr-1"></i>Mượn lúc: <span class="font-semibold text-gray-700">${item.borrowTime}</span> | Người cấp: <span class="font-semibold text-slate-700">${item.adminName}</span></p>
+                            <p class="text-xs text-gray-500 mt-1"><i class="fa-regular fa-clock mr-1"></i>Mượn lúc: <span class="font-semibold text-gray-700">${item.borrowTime}</span> | Người cấp: <span class="font-semibold text-slate-700">${item.adminName}</span></p>
                         </div>
                         <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${isDisabled ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs shadow-sm transition-all disabled:opacity-50 shrink-0">
                             Nhận Trả
@@ -1220,18 +1363,10 @@
 
             const textToCopy = currentModalPdaCodes.join(', ');
             navigator.clipboard.writeText(textToCopy).then(() => {
-                const btn = document.getElementById('btnCopyAllPda');
-                const originalHtml = btn.innerHTML;
-                btn.innerHTML = `<i class="fa-solid fa-check text-emerald-600"></i> Đã sao chép!`;
-                btn.className = "bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 shadow-sm";
-
-                setTimeout(() => {
-                    btn.innerHTML = originalHtml;
-                    btn.className = "bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 shadow-sm";
-                }, 2000);
+                showToast("Đã sao chép tất cả mã PDA vào clipboard!");
             }).catch(err => {
                 console.error("Không thể copy:", err);
-                alert("❌ Lỗi khi sao chép danh sách mã!");
+                showToast("Lỗi khi sao chép danh sách mã!", 'error');
             });
         };
 
@@ -1258,7 +1393,7 @@
                         <td class="p-2.5">${item.borrowTime}</td>
                         <td class="p-2.5">${item.adminName}</td>
                         <td class="p-2.5 text-center">
-                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${isDisabled ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded-lg font-bold text-[11px] shadow-sm disabled:opacity-50 transition-all">
+                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${isDisabled ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded-lg font-bold text-xs shadow-sm disabled:opacity-50 transition-all">
                                 Nhận Trả
                             </button>
                         </td>
@@ -1272,11 +1407,11 @@
                     <tr class="hover:bg-gray-50/80 border-b border-gray-100 transition-all">
                         <td class="p-2.5 font-bold text-orange-600">${item.pdaCode}</td>
                         <td class="p-2.5">${renderDeviceBadge(devType)}</td>
-                        <td class="p-2.5 font-bold text-gray-800">${item.empName} <span class="text-gray-400 font-medium text-[10px]">(${item.opsId})</span></td>
+                        <td class="p-2.5 font-bold text-gray-800">${item.empName} <span class="text-gray-400 font-medium text-xs">(${item.opsId})</span></td>
                         <td class="p-2.5 text-gray-600 font-medium">${item.team} - ${item.supervisor}</td>
-                        <td class="p-2.5 text-gray-500 text-[10px]">${item.borrowTime}</td>
+                        <td class="p-2.5 text-gray-500 text-xs">${item.borrowTime}</td>
                         <td class="p-2.5 text-right">
-                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${isDisabled ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded-lg font-bold text-[11px] shadow-sm disabled:opacity-50 transition-all">Nhận Trả</button>
+                            <button onclick="returnPdaDirect('${item.id}', '${item.pdaCode}')" ${isDisabled ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded-lg font-bold text-xs shadow-sm disabled:opacity-50 transition-all">Nhận Trả</button>
                         </td>
                     </tr>
                 `;
@@ -1288,14 +1423,14 @@
                 const devType = detectDeviceType(log.pdaCode);
                 return `
                     <tr class="hover:bg-gray-50 border-b border-gray-100">
-                        <td class="p-2.5 text-gray-600 font-bold text-[11px]">${log.timestamp}</td>
+                        <td class="p-2.5 text-gray-600 font-bold text-xs">${log.timestamp}</td>
                         <td class="p-2.5 font-bold text-orange-600">${log.pdaCode}</td>
                         <td class="p-2.5">${renderDeviceBadge(devType)}</td>
-                        <td class="p-2.5"><span class="${log.status === 'MƯỢN' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} font-bold px-2 py-0.5 rounded text-[10px]">${log.status}</span></td>
+                        <td class="p-2.5"><span class="${log.status === 'MƯỢN' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} font-bold px-2 py-0.5 rounded text-xs">${log.status}</span></td>
                         <td class="p-2.5 font-semibold">${log.opsId}</td>
                         <td class="p-2.5 font-bold">${log.empName}</td>
-                        <td class="p-2.5 text-[11px] ${log.details && log.details.includes('TRẢ HỘ') ? 'text-red-600 font-bold' : 'text-gray-600'}">${log.details || 'Chính chủ'}</td>
-                        <td class="p-2.5 text-[11px] font-bold text-slate-700">${log.adminName}</td>
+                        <td class="p-2.5 text-xs ${log.details && log.details.includes('TRẢ HỘ') ? 'text-red-600 font-bold' : 'text-gray-600'}">${log.details || 'Chính chủ'}</td>
+                        <td class="p-2.5 text-xs font-bold text-slate-700">${log.adminName}</td>
                     </tr>
                 `;
             }).join('');
@@ -1321,12 +1456,12 @@
                     </td>
                     <td class="p-2 font-bold text-orange-600">${emp.opsId}</td>
                     <td class="p-2 font-bold text-gray-800">${emp.empName}</td>
-                    <td class="p-2 text-gray-500 font-medium text-[11px]">${emp.email || 'N/A'}</td>
-                    <td class="p-2 font-semibold"><span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[11px]">${emp.team || 'N/A'}</span></td>
+                    <td class="p-2 text-gray-500 font-medium text-xs">${emp.email || 'N/A'}</td>
+                    <td class="p-2 font-semibold"><span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs">${emp.team || 'N/A'}</span></td>
                     <td class="p-2 font-semibold text-gray-700">${emp.supervisor || 'N/A'}</td>
                     <td class="p-2 text-center">
-                        <button onclick="editEmployee('${emp.opsId}', '${emp.empName}', '${emp.email || ''}', '${emp.team || ''}', '${emp.supervisor || ''}')" ${isDisabled ? 'disabled' : ''} class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-2.5 py-1 rounded font-bold text-[11px] mr-1 transition-all disabled:opacity-50">Sửa</button>
-                        <button onclick="deleteSingleEmployee('${emp.id}', '${emp.empName}')" ${isDisabled ? 'disabled' : ''} class="bg-red-50 text-red-600 hover:bg-red-100 px-2.5 py-1 rounded font-bold text-[11px] transition-all disabled:opacity-50">Xóa</button>
+                        <button onclick="editEmployee('${emp.opsId}', '${emp.empName}', '${emp.email || ''}', '${emp.team || ''}', '${emp.supervisor || ''}')" ${isDisabled ? 'disabled' : ''} class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-2.5 py-1 rounded font-bold text-xs mr-1 transition-all disabled:opacity-50">Sửa</button>
+                        <button onclick="deleteSingleEmployee('${emp.id}', '${emp.empName}')" ${isDisabled ? 'disabled' : ''} class="bg-red-50 text-red-600 hover:bg-red-100 px-2.5 py-1 rounded font-bold text-xs transition-all disabled:opacity-50">Xóa</button>
                     </td>
                 </tr>
             `).join('');
@@ -1374,17 +1509,18 @@
 
         window.deleteSingleEmployee = async function(id, name) {
             if (currentUserRole === 'guest') return;
-            if (!confirm(`Bạn có chắc chắn muốn xóa nhân viên "${name}" khỏi hệ thống?`)) return;
+            const confirmDelete = await showCustomConfirm("Xóa Nhân Viên", `Bạn có chắc chắn muốn xóa nhân viên "${name}" khỏi hệ thống?`, true);
+            if (!confirmDelete) return;
 
             const { doc, deleteDoc } = window.fs;
             const db = window.db;
 
             try {
                 await deleteDoc(doc(db, "employees", id));
-                alert(`✅ Đã xóa nhân viên "${name}"!`);
+                showToast(`Đã xóa nhân viên "${name}"!`);
             } catch (err) {
                 console.error(err);
-                alert("❌ Có lỗi xảy ra khi xóa nhân viên!");
+                showToast("Có lỗi xảy ra khi xóa nhân viên!", 'error');
             }
         };
 
@@ -1392,11 +1528,12 @@
             if (currentUserRole === 'guest') return;
             const selectedCheckboxes = document.querySelectorAll('.emp-checkbox:checked');
             if (selectedCheckboxes.length === 0) {
-                alert("⚠️ Vui lòng tích chọn ít nhất 1 nhân viên để xóa!");
+                showToast("Vui lòng tích chọn ít nhất 1 nhân viên để xóa!", 'warning');
                 return;
             }
 
-            if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedCheckboxes.length} nhân viên đã chọn?`)) return;
+            const confirmDelete = await showCustomConfirm("Xóa Nhiều Nhân Viên", `Bạn có chắc chắn muốn xóa ${selectedCheckboxes.length} nhân viên đã chọn?`, true);
+            if (!confirmDelete) return;
 
             const { collection, writeBatch, doc } = window.fs;
             const db = window.db;
@@ -1408,28 +1545,22 @@
 
             try {
                 await batch.commit();
-                alert(`✅ Đã xóa thành công ${selectedCheckboxes.length} nhân viên đã chọn!`);
+                showToast(`Đã xóa thành công ${selectedCheckboxes.length} nhân viên!`);
             } catch (err) {
                 console.error(err);
-                alert("❌ Có lỗi xảy ra khi xóa danh sách đã chọn!");
+                showToast("Có lỗi xảy ra khi xóa danh sách!", 'error');
             }
         };
 
         window.deleteAllEmployees = async function() {
             if (currentUserRole === 'guest') return;
             if (employeeCache.length === 0) {
-                alert("⚠️ CSDL Nhân viên hiện đang trống!");
+                showToast("CSDL Nhân viên hiện đang trống!", 'warning');
                 return;
             }
 
-            const confirm1 = confirm(`🚨 CẢNH BÁO CỰC KỲ QUAN TRỌNG!\n\nBạn có chắc chắn muốn XÓA TOÀN BỘ ${employeeCache.length} nhân viên trong CSDL? Thao tác này không thể hoàn tác!`);
+            const confirm1 = await showCustomConfirm("CẢNH BÁO NGUY HIỂM", `Bạn có chắc chắn muốn XÓA TOÀN BỘ ${employeeCache.length} nhân viên trong CSDL? Thao tác này không thể hoàn tác!`, true);
             if (!confirm1) return;
-
-            const confirm2 = prompt(`Vui lòng nhập từ "DELETE" để xác nhận xóa toàn bộ danh sách nhân viên:`);
-            if (confirm2 !== "DELETE") {
-                alert("❌ Mã xác nhận không đúng. Đã hủy thao tác xóa!");
-                return;
-            }
 
             const { collection, writeBatch, doc } = window.fs;
             const db = window.db;
@@ -1452,10 +1583,10 @@
                     await batch.commit();
                 }
 
-                alert("✅ Đã xóa sạch toàn bộ danh sách nhân viên khỏi cơ sở dữ liệu!");
+                showToast("Đã xóa sạch toàn bộ CSDL nhân viên!");
             } catch (err) {
                 console.error(err);
-                alert("❌ Có lỗi xảy ra khi xóa toàn bộ dữ liệu nhân viên!");
+                showToast("Có lỗi xảy ra khi xóa CSDL nhân viên!", 'error');
             }
         };
 
@@ -1491,16 +1622,16 @@
                 if (!querySnapshot.empty) {
                     const docId = querySnapshot.docs[0].id;
                     await updateDoc(doc(db, "employees", docId), { empName, email, team, supervisor });
-                    alert(`✅ Đã cập nhật thành công thông tin cho [${opsId}]!`);
+                    showToast(`Đã cập nhật thông tin cho [${opsId}]!`);
                 } else {
                     await addDoc(collection(db, "employees"), { opsId, empName, email, team, supervisor });
-                    alert(`✅ Đã thêm nhân viên mới [${opsId}] thành công!`);
+                    showToast(`Đã thêm nhân viên mới [${opsId}]!`);
                 }
 
                 document.getElementById('empForm').reset();
             } catch (error) {
                 console.error("Lỗi khi lưu nhân viên: ", error);
-                alert("❌ Có lỗi xảy ra khi lưu. Vui lòng thử lại!");
+                showToast("Có lỗi xảy ra khi lưu nhân viên!", 'error');
             }
         };
 
@@ -1535,7 +1666,7 @@
             }
 
             if (count > 0) {
-                alert(`✅ Đã tải thành công ${count} nhân viên từ file vào hệ thống!`);
+                showToast(`Đã tải thành công ${count} nhân viên vào CSDL!`);
             }
         }
 
@@ -1564,9 +1695,9 @@
             reader.readAsArrayBuffer(file);
         });
 
+        // NHẬN TRẢ TRỰC TIẾP TẬN DỤNG TOAST MƠI
         window.returnPdaDirect = async function(docId, pdaCode) {
             if (currentUserRole === 'guest') return;
-            if (!confirm(`Xác nhận thu hồi thiết bị [${pdaCode}]?`)) return;
 
             const { collection, addDoc, doc, deleteDoc, getDoc, serverTimestamp } = window.fs;
             const db = window.db;
@@ -1606,7 +1737,7 @@
                 });
 
                 closeModal();
-                alert(`✅ Đã thu hồi thiết bị ${pdaCode}!`);
+                showToast(`⚡ Đã thu hồi thiết bị ${pdaCode} thành công!`);
             }
         };
 
