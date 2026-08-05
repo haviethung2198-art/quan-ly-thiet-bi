@@ -251,13 +251,13 @@
 
                         <div class="grid grid-cols-2 gap-3 pt-1">
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">TEAM (Thay đổi được)</label>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">TEAM</label>
                                 <select id="displayEmpTeam" class="w-full p-2.5 border border-orange-300 rounded-lg bg-white font-bold text-gray-800 outline-none text-xs focus:border-orange-600 cursor-pointer">
                                     <option value="">-- Chọn Team --</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">SUPERVISOR DIRECT (Thay đổi được)</label>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">SUPERVISOR</label>
                                 <select id="displayEmpSup" class="w-full p-2.5 border border-orange-300 rounded-lg bg-white font-bold text-gray-800 outline-none text-xs focus:border-orange-600 cursor-pointer">
                                     <option value="">-- Chọn Sup --</option>
                                 </select>
@@ -269,27 +269,27 @@
                     <div class="col-span-12 lg:col-span-6 bg-white rounded-xl p-4 shadow-sm border border-gray-200 flex flex-col justify-between space-y-3">
                         <div class="flex items-center gap-2 border-b pb-2.5">
                             <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-extrabold flex items-center justify-center text-xs">2</span>
-                            <h2 class="font-extrabold uppercase text-xs text-gray-800 tracking-wide">QUÉT NHIỀU PDA CÙNG LÚC</h2>
+                            <h2 class="font-extrabold uppercase text-xs text-gray-800 tracking-wide">QUÉT MÃ THIẾT BỊ</h2>
                         </div>
                         
                         <div class="grid grid-cols-2 gap-3">
                             <div class="border-2 border-emerald-400 border-dashed rounded-xl p-3 bg-emerald-50/30">
-                                <span class="font-extrabold text-emerald-800 block mb-1 text-xs uppercase"><i class="fa-solid fa-arrow-up-from-bracket mr-1"></i> MƯỢN NHIỀU MÁY</span>
-                                <input type="text" id="borrowPdaInput" placeholder="Quét mã PDA mượn..." class="w-full p-2.5 border rounded-lg bg-white outline-none font-bold text-xs text-gray-800 focus:border-emerald-500">
+                                <span class="font-extrabold text-emerald-800 block mb-1 text-xs uppercase"><i class="fa-solid fa-arrow-up-from-bracket mr-1"></i> MƯỢN</span>
+                                <input type="text" id="borrowPdaInput" placeholder="Quét mã thiết bị mượn..." class="w-full p-2.5 border rounded-lg bg-white outline-none font-bold text-xs text-gray-800 focus:border-emerald-500">
                             </div>
                             <div class="border-2 border-amber-400 border-dashed rounded-xl p-3 bg-amber-50/30">
-                                <span class="font-extrabold text-amber-800 block mb-1 text-xs uppercase"><i class="fa-solid fa-arrow-down-to-bracket mr-1"></i> TRẢ NHIỀU MÁY</span>
-                                <input type="text" id="returnPdaInput" placeholder="Quét mã PDA trả..." class="w-full p-2.5 border rounded-lg bg-white outline-none font-bold text-xs text-gray-800 focus:border-amber-500">
+                                <span class="font-extrabold text-amber-800 block mb-1 text-xs uppercase"><i class="fa-solid fa-arrow-down-to-bracket mr-1"></i> TRẢ</span>
+                                <input type="text" id="returnPdaInput" placeholder="Quét mã thiết bị trả..." class="w-full p-2.5 border rounded-lg bg-white outline-none font-bold text-xs text-gray-800 focus:border-amber-500">
                             </div>
                         </div>
 
                         <div class="flex-1 flex flex-col justify-center my-1">
                             <div class="flex justify-between items-center text-xs font-bold text-gray-600 mb-1.5">
-                                <span>Danh sách PDA vừa quét (<span id="pendingCount" class="text-orange-600 font-extrabold">0</span>):</span>
+                                <span>Danh sách thiết bị vừa quét (<span id="pendingCount" class="text-orange-600 font-extrabold">0</span>):</span>
                                 <button onclick="clearPendingList()" class="text-red-500 hover:underline">Xóa tất cả</button>
                             </div>
                             <div id="pendingPdaList" class="flex flex-col gap-1.5 min-h-[70px] max-h-[110px] overflow-y-auto p-2.5 border rounded-xl bg-gray-50">
-                                <span class="text-gray-400 text-xs italic font-medium">Chưa quét mã PDA nào...</span>
+                                <span class="text-gray-400 text-xs italic font-medium">Chưa quét mã thiết bị nào...</span>
                             </div>
                         </div>
 
@@ -305,7 +305,7 @@
                         <h3 class="font-extrabold text-gray-800 uppercase flex items-center gap-2 text-xs tracking-wide">
                             <i class="fa-solid fa-list-ul text-orange-500 text-sm"></i> PDA CHƯA TRẢ REALTIME TRACKER
                         </h3>
-                        <span class="text-xs font-bold text-gray-400">Tự động cập nhật tức thì</span>
+                        <span class="text-xs font-bold text-gray-400">Bấm trả nhanh tại cột thao tác bên dưới</span>
                     </div>
                     
                     <div class="overflow-x-auto flex-1 max-h-[320px] overflow-y-auto rounded-xl border border-gray-100">
@@ -384,8 +384,8 @@
                                 <th class="p-2.5">Mã PDA</th>
                                 <th class="p-2.5">Loại Thiết Bị</th>
                                 <th class="p-2.5">Status</th>
-                                <th class="p-2.5">Mã NV Thực Hiện</th>
-                                <th class="p-2.5">Họ Tên Thực Hiện</th>
+                                <th class="p-2.5">Mã nhân viên</th>
+                                <th class="p-2.5">Họ Tên</th>
                                 <th class="p-2.5">Ghi Chú Trả Hộ / Chi Tiết</th>
                                 <th class="p-2.5">Người Thực Hiện (Admin)</th>
                             </tr>
@@ -395,7 +395,7 @@
                 </div>
             </div>
 
-            <!-- TAB 4: QUẢN LÝ NHÂN VIÊN -->
+            <!-- TAB 4: DANH SÁCH NHÂN VIÊN -->
             <div id="tab-employees" class="tab-content hidden flex-1 flex flex-col space-y-3 h-full min-h-0 overflow-hidden">
                 <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 flex items-center justify-between shrink-0">
                     <div class="flex items-center gap-2">
@@ -416,15 +416,15 @@
                     <form id="empForm" onsubmit="saveEmployee(event)" class="grid grid-cols-6 gap-2">
                         <div>
                             <label class="block font-semibold text-gray-600 mb-0.5 text-[11px]">Ops ID / Mã NV</label>
-                            <input type="text" id="empOpsId" required placeholder="Ops2120" class="w-full p-1.5 border rounded-lg outline-none focus:border-orange-500 bg-orange-50 font-bold text-xs">
+                            <input type="text" id="empOpsId" required placeholder="Ops5509" class="w-full p-1.5 border rounded-lg outline-none focus:border-orange-500 bg-orange-50 font-bold text-xs">
                         </div>
                         <div>
                             <label class="block font-semibold text-gray-600 mb-0.5 text-[11px]">Họ và Tên</label>
-                            <input type="text" id="empName" required placeholder="BÙI VĂN VĨ" class="w-full p-1.5 border rounded-lg outline-none focus:border-orange-500 font-semibold text-xs">
+                            <input type="text" id="empName" required placeholder="HÀ VIỆT HÙNG" class="w-full p-1.5 border rounded-lg outline-none focus:border-orange-500 font-semibold text-xs">
                         </div>
                         <div>
                             <label class="block font-semibold text-gray-600 mb-0.5 text-[11px]">Email</label>
-                            <input type="email" id="empEmail" placeholder="vi.buivan@spxexpress.com" class="w-full p-1.5 border rounded-lg outline-none focus:border-orange-500 text-xs">
+                            <input type="email" id="empEmail" placeholder="hung.haviet@spxexpress.com" class="w-full p-1.5 border rounded-lg outline-none focus:border-orange-500 text-xs">
                         </div>
                         <div>
                             <label class="block font-semibold text-gray-600 mb-0.5 text-[11px]">Team</label>
@@ -449,7 +449,7 @@
                         <div class="flex items-center gap-2">
                             <h2 class="text-xs font-bold text-gray-800 uppercase">Danh Sách Nhân Viên (<span id="empCount">0</span>)</h2>
                             <button id="btnDeleteSelectedEmp" onclick="deleteSelectedEmployees()" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-bold px-2 py-0.5 rounded-lg text-xs transition-all flex items-center gap-1 disabled:opacity-50">
-                                <i class="fa-solid fa-trash-can"></i> Xóa Đã Chọn
+                                <i class="fa-solid fa-trash-can"></i> Xóa Các Nhân Viên Đã Chọn
                             </button>
                             <button id="btnDeleteAllEmp" onclick="deleteAllEmployees()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2 py-0.5 rounded-lg text-xs transition-all flex items-center gap-1 shadow-sm disabled:opacity-50">
                                 <i class="fa-solid fa-triangle-exclamation"></i> Xóa Tất Cả CSDL
@@ -1294,7 +1294,7 @@
                         status: "MƯỢN",
                         opsId: selectedEmployee.opsId,
                         empName: selectedEmployee.empName,
-                        details: `Mượn máy trực tiếp (${finalTeam} / ${finalSup})`,
+                        details: `Mượn máy từ (${finalTeam} / ${finalSup})`,
                         adminName: adminName
                     });
                 }
@@ -1314,7 +1314,7 @@
 
                         let logOpsId = orig.opsId;
                         let logEmpName = orig.empName;
-                        let logDetails = "Trả máy chính chủ";
+                        let logDetails = "Người mượn trả";
 
                         if (selectedEmployee && selectedEmployee.opsId.toLowerCase() !== orig.opsId.toLowerCase()) {
                             logOpsId = selectedEmployee.opsId;
@@ -1835,7 +1835,7 @@
 
                 let logOpsId = data.opsId;
                 let logEmpName = data.empName;
-                let logDetails = "Nhận trả trực tiếp tại bảng";
+                let logDetails = "Nhận trả tại thao tác nhanh";
 
                 if (selectedEmployee && selectedEmployee.opsId.toLowerCase() !== data.opsId.toLowerCase()) {
                     logOpsId = selectedEmployee.opsId;
