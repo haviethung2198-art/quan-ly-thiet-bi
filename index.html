@@ -37,7 +37,7 @@
     </script>
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        * { font-family: 'Plus Jakarta Sans', sans-serif !important; }
         .radar-box { position: relative; width: 70px; height: 70px; border-radius: 50%; background: rgba(255,247,237,0.8); display: flex; align-items: center; justify-content: center; }
         .radar-circle { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px solid rgba(249,115,22,0.4); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(1.4); opacity: 0; } }
@@ -93,7 +93,7 @@
             </div>
             <div class="text-right text-gray-600">
                 <span id="currentDay" class="font-semibold mr-2">Thứ tư – Ngày 05/08/2026</span>
-                <span id="currentTime" class="font-mono font-bold text-orange-600 text-base">13:14:50</span>
+                <span id="currentTime" class="font-bold text-orange-600 text-base">13:21:40</span>
             </div>
         </header>
 
@@ -121,7 +121,7 @@
                         </div>
                     </div>
 
-                    <!-- OPS ID & Auto-Fill Cải Tiến (Thêm 2 ô Team và Sup riêng biệt) -->
+                    <!-- OPS ID & Auto-Fill -->
                     <div class="col-span-12 lg:col-span-4 bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-3">
                         <div class="flex items-center gap-2">
                             <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">1</span>
@@ -131,12 +131,10 @@
                             <input type="text" id="scanEmpInput" autofocus placeholder="Quét mã NV (Mượn máy hoặc Trả hộ)..." class="flex-1 p-2.5 border border-orange-400 rounded-lg focus:border-orange-600 outline-none text-sm font-semibold text-gray-800">
                         </div>
                         
-                        <!-- Box hiển thị Tên & Ops ID -->
                         <div id="selectedEmpBox" class="border border-orange-200 rounded-lg p-3 bg-orange-50/30">
                             <p class="text-gray-400 text-xs">Chưa quét thông tin nhân viên</p>
                         </div>
 
-                        <!-- 2 Ô Team & Sup nằm ở dưới cùng theo yêu cầu -->
                         <div class="grid grid-cols-2 gap-3 pt-1">
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Team</label>
@@ -164,7 +162,6 @@
                             </div>
                         </div>
 
-                        <!-- Danh sách thiết bị chờ cấp mượn / trả -->
                         <div>
                             <div class="flex justify-between items-center text-xs font-bold text-gray-600 mb-1">
                                 <span>Danh sách PDA vừa quét (<span id="pendingCount">0</span>):</span>
@@ -203,7 +200,7 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-800 text-white">
+                        <thead class="bg-slate-800 text-white font-bold">
                             <tr>
                                 <th class="p-3">Mã Thiết Bị</th>
                                 <th class="p-3">Loại</th>
@@ -240,10 +237,10 @@
                 </div>
             </div>
 
-            <!-- TAB 3: LOGS NHẬT KÝ -->
+            <!-- TAB 3: LOGS NHẬT KÝ (ĐÃ THÊM CỘT LOẠI THIẾT BỊ VÀ ĐỒNG BỘ FONT CHỮ) -->
             <div id="tab-logs" class="tab-content hidden bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                 <div class="flex justify-between items-center mb-4 border-b pb-3">
-                    <h2 class="text-base font-bold text-gray-800 uppercase">Logs Nhật Ký Mượn / Trả</h2>
+                    <h2 class="text-base font-bold text-gray-800 uppercase">LOGS NHẬT KÝ MƯỢN / TRẢ</h2>
                     <span class="text-xs text-gray-500 font-semibold"><i class="fa-solid fa-arrow-down-wide-short text-orange-500 mr-1"></i> Sắp xếp: Mới nhất ➔ Cũ nhất</span>
                 </div>
                 <div class="overflow-x-auto">
@@ -252,6 +249,7 @@
                             <tr>
                                 <th class="p-3">Timestamp</th>
                                 <th class="p-3">Mã PDA</th>
+                                <th class="p-3">Loại Thiết Bị</th>
                                 <th class="p-3">Status</th>
                                 <th class="p-3">Mã NV Thực Hiện</th>
                                 <th class="p-3">Họ Tên Thực Hiện</th>
@@ -334,7 +332,7 @@
 
                     <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
                         <table class="w-full text-left relative">
-                            <thead class="bg-gray-100 text-gray-600 sticky top-0 shadow-sm z-10">
+                            <thead class="bg-gray-100 text-gray-600 sticky top-0 shadow-sm z-10 font-bold">
                                 <tr>
                                     <th class="p-3 text-center w-10">
                                         <input type="checkbox" id="selectAllEmp" onclick="toggleSelectAllEmployees(this)" class="w-4 h-4 rounded cursor-pointer accent-orange-600">
@@ -386,7 +384,7 @@
         let employeeCache = [];
         let unreturnedCache = [];
 
-        // HÀM NHẬN DIỆN LOẠI THIẾT BỊ ĐỘNG THEO MÃ YÊU CẦU
+        // HÀM NHẬN DIỆN LOẠI THIẾT BỊ ĐỘNG
         function detectDeviceType(code) {
             if (!code) return 'N/A';
             const upperCode = code.toUpperCase().trim();
@@ -467,7 +465,7 @@
             });
         });
 
-        // AUTO-FILL OPS ID VÀ ĐỔ DỮ LIỆU TEAM & SUPERVISOR XUỐNG 2 Ô BÊN DƯỚI
+        // AUTO-FILL OPS ID
         const scanEmpInput = document.getElementById('scanEmpInput');
         if (scanEmpInput) {
             const checkAndFillEmployee = async () => {
@@ -498,12 +496,11 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <p class="font-bold text-gray-800 text-sm">${empData.empName}</p>
-                                <p class="text-gray-500 font-mono text-xs">Mã NV: <span class="text-orange-600 font-bold">${empData.opsId}</span></p>
+                                <p class="text-gray-500 font-bold text-xs">Mã NV: <span class="text-orange-600 font-bold">${empData.opsId}</span></p>
                             </div>
                             <span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded text-xs">✓ Đã quét NV</span>
                         </div>
                     `;
-                    // Đổ dữ liệu xuống 2 ô đánh dấu bên dưới
                     empTeamInput.value = empData.team || 'N/A';
                     empSupInput.value = empData.supervisor || 'N/A';
                 } else {
@@ -560,7 +557,7 @@
                     const activeRecord = unreturnedCache.find(item => item.pdaCode.toLowerCase() === code.toLowerCase());
 
                     if (!activeRecord) {
-                        alert(`❌ Máy/Súng ${code} hiện KHÔNG nằm trong danh sách đang mượn!`);
+                        alert(`❌ Mã ${code} hiện KHÔNG nằm trong danh sách đang mượn!`);
                         returnPdaInput.value = '';
                         return;
                     }
@@ -591,7 +588,7 @@
             pendingBorrowPdaList.forEach((code, index) => {
                 const devType = detectDeviceType(code);
                 html += `
-                    <div class="bg-emerald-100 text-emerald-800 text-xs font-mono font-bold px-2 py-1 rounded flex justify-between items-center">
+                    <div class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded flex justify-between items-center">
                         <span>[MƯỢN] ${code} <span class="text-[10px] bg-emerald-200 text-emerald-900 px-1 rounded font-sans ml-1">${devType}</span></span>
                         <button onclick="removePending('borrow', ${index})" class="text-emerald-600 hover:text-red-600 font-extrabold text-sm ml-2">×</button>
                     </div>
@@ -607,7 +604,7 @@
                 html += `
                     <div class="bg-amber-100 text-amber-900 text-xs px-2 py-1.5 rounded flex justify-between items-center border border-amber-200">
                         <div>
-                            <span class="font-mono font-bold text-amber-800">[TRẢ] ${item.code}</span>
+                            <span class="font-bold text-amber-800">[TRẢ] ${item.code}</span>
                             <span class="ml-2 text-gray-600 text-[11px]">${extraInfo}</span>
                         </div>
                         <button onclick="removePending('return', ${index})" class="text-amber-700 hover:text-red-600 font-extrabold text-sm ml-2">×</button>
@@ -630,7 +627,7 @@
             renderPendingList();
         };
 
-        // BATCH TRANSACTION TỰ ĐỘNG LƯU PHÂN LOẠI THIẾT BỊ
+        // LƯU TRANSACTION TỰ ĐỘNG LƯU PHÂN LOẠI THIẾT BỊ VÀO LOGS
         window.processBatchTransaction = async function() {
             if (pendingBorrowPdaList.length === 0 && pendingReturnPdaList.length === 0) {
                 alert("⚠️ Hãy quét ít nhất 1 mã PDA/Súng Scan để cấp mượn hoặc thu hồi!");
@@ -658,7 +655,6 @@
                         continue;
                     }
 
-                    // Tự động phân loại theo điều kiện mã
                     const pdaType = detectDeviceType(borrowPda);
 
                     await addDoc(collection(db, "unreturned"), {
@@ -677,10 +673,11 @@
                         timestamp: timeStr,
                         createdAt: serverTimestamp(),
                         pdaCode: borrowPda,
+                        pdaType: pdaType,
                         status: "MƯỢN",
                         opsId: selectedEmployee.opsId,
                         empName: selectedEmployee.empName,
-                        details: `Mượn ${pdaType} trực tiếp`,
+                        details: `Mượn máy trực tiếp`,
                         adminName: adminName
                     });
                 }
@@ -708,10 +705,13 @@
                             logDetails = `⚠️ TRẢ HỘ cho [${orig.empName} - ${orig.opsId}]`;
                         }
 
+                        const pdaType = orig.pdaType || detectDeviceType(returnPda);
+
                         await addDoc(collection(db, "logs"), {
                             timestamp: timeStr,
                             createdAt: serverTimestamp(),
                             pdaCode: returnPda,
+                            pdaType: pdaType,
                             status: "TRẢ",
                             opsId: logOpsId,
                             empName: logEmpName,
@@ -781,7 +781,7 @@
                         <tr onclick="openEmpDetailsModal('${opsId}')" class="hover:bg-purple-50/60 cursor-pointer transition-all border-b border-gray-100">
                             <td class="p-2.5">
                                 <div class="font-bold text-gray-800">${emp.empName}</div>
-                                <div class="text-[11px] font-mono text-gray-400">${emp.opsId}</div>
+                                <div class="text-[11px] font-bold text-gray-400">${emp.opsId}</div>
                             </td>
                             <td class="p-2.5 text-right font-bold">
                                 <span class="bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full text-xs hover:bg-purple-200">${count} thiết bị</span>
@@ -829,11 +829,11 @@
 
             const listContainer = document.getElementById('modalPdaList');
             listContainer.innerHTML = empItems.map(item => {
-                const devType = detectDeviceType(item.pdaCode);
+                const devType = item.pdaType || detectDeviceType(item.pdaCode);
                 return `
                     <div class="bg-orange-50/50 border border-orange-200 rounded-lg p-3 flex justify-between items-center">
                         <div>
-                            <span class="font-mono font-extrabold text-orange-600 text-sm">${item.pdaCode}</span>
+                            <span class="font-extrabold text-orange-600 text-sm">${item.pdaCode}</span>
                             <span class="bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded text-[10px] ml-2">${devType}</span>
                             <p class="text-[11px] text-gray-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>Mượn lúc: ${item.borrowTime}</p>
                         </div>
@@ -851,18 +851,18 @@
             document.getElementById('empDetailsModal').classList.add('hidden');
         };
 
-        // RENDER BẢNG UNRETURNED VỚI PHÂN LOẠI MỚI CHUẨN XÁC
+        // RENDER BẢNG UNRETURNED
         function renderUnreturned(list) {
             const fullTbody = document.getElementById('unreturnedFullTable');
             const miniTbody = document.getElementById('unreturnedMiniTable');
 
             fullTbody.innerHTML = list.map(item => {
-                const devType = detectDeviceType(item.pdaCode);
+                const devType = item.pdaType || detectDeviceType(item.pdaCode);
                 return `
                     <tr class="hover:bg-orange-50/40">
-                        <td class="p-3 font-mono font-bold text-orange-600">${item.pdaCode}</td>
+                        <td class="p-3 font-bold text-orange-600">${item.pdaCode}</td>
                         <td class="p-3"><span class="bg-slate-100 text-slate-700 font-bold px-2.5 py-1 rounded-full text-xs">${devType}</span></td>
-                        <td class="p-3 font-mono">${item.opsId}</td>
+                        <td class="p-3 font-semibold">${item.opsId}</td>
                         <td class="p-3 font-bold">${item.empName}</td>
                         <td class="p-3">${item.team}</td>
                         <td class="p-3">${item.supervisor}</td>
@@ -878,10 +878,10 @@
             }).join('');
 
             miniTbody.innerHTML = list.slice(0, 5).map(item => {
-                const devType = detectDeviceType(item.pdaCode);
+                const devType = item.pdaType || detectDeviceType(item.pdaCode);
                 return `
                     <tr>
-                        <td class="p-2.5 font-mono font-bold text-orange-600">${item.pdaCode}</td>
+                        <td class="p-2.5 font-bold text-orange-600">${item.pdaCode}</td>
                         <td class="p-2.5"><span class="bg-gray-100 text-gray-800 font-semibold px-2 py-0.5 rounded text-[11px]">${devType}</span></td>
                         <td class="p-2.5 font-bold">${item.empName} <span class="text-gray-400 font-normal">(${item.opsId})</span></td>
                         <td class="p-2.5">${item.team} - ${item.supervisor}</td>
@@ -894,18 +894,23 @@
             }).join('');
         }
 
+        // RENDER LOGS TABLE (CÓ CỘT LOẠI THIẾT BỊ VÀ ĐỒNG BỘ NGUYÊN BẢNG CÙNG 1 FONT CHỮ)
         function renderLogs(logs) {
-            document.getElementById('logsTable').innerHTML = logs.map(log => `
-                <tr class="hover:bg-gray-50">
-                    <td class="p-3 font-mono text-gray-600 font-bold text-xs">${log.timestamp}</td>
-                    <td class="p-3 font-mono font-bold text-orange-600">${log.pdaCode}</td>
-                    <td class="p-3"><span class="${log.status === 'MƯỢN' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} font-bold px-2 py-1 rounded text-xs">${log.status}</span></td>
-                    <td class="p-3 font-mono font-semibold">${log.opsId}</td>
-                    <td class="p-3 font-bold">${log.empName}</td>
-                    <td class="p-3 text-xs ${log.details && log.details.includes('TRẢ HỘ') ? 'text-red-600 font-bold' : 'text-gray-600'}">${log.details || 'Chính chủ'}</td>
-                    <td class="p-3 text-xs">${log.adminName}</td>
-                </tr>
-            `).join('');
+            document.getElementById('logsTable').innerHTML = logs.map(log => {
+                const devType = log.pdaType || detectDeviceType(log.pdaCode);
+                return `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100">
+                        <td class="p-3 text-gray-600 font-bold text-xs">${log.timestamp}</td>
+                        <td class="p-3 font-bold text-orange-600">${log.pdaCode}</td>
+                        <td class="p-3"><span class="bg-slate-100 text-slate-700 font-bold px-2 py-1 rounded text-xs">${devType}</span></td>
+                        <td class="p-3"><span class="${log.status === 'MƯỢN' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} font-bold px-2 py-1 rounded text-xs">${log.status}</span></td>
+                        <td class="p-3 font-semibold">${log.opsId}</td>
+                        <td class="p-3 font-bold">${log.empName}</td>
+                        <td class="p-3 text-xs ${log.details && log.details.includes('TRẢ HỘ') ? 'text-red-600 font-bold' : 'text-gray-600'}">${log.details || 'Chính chủ'}</td>
+                        <td class="p-3 text-xs">${log.adminName}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function renderEmployees(emps) {
@@ -919,9 +924,9 @@
                     <td class="p-3 text-center">
                         <input type="checkbox" value="${emp.id}" class="emp-checkbox w-4 h-4 rounded cursor-pointer accent-orange-600">
                     </td>
-                    <td class="p-3 font-mono font-bold text-orange-600">${emp.opsId}</td>
+                    <td class="p-3 font-bold text-orange-600">${emp.opsId}</td>
                     <td class="p-3 font-bold">${emp.empName}</td>
-                    <td class="p-3 text-gray-500 font-mono text-xs">${emp.email || 'N/A'}</td>
+                    <td class="p-3 text-gray-500 font-bold text-xs">${emp.email || 'N/A'}</td>
                     <td class="p-3 font-semibold">${emp.team || 'N/A'}</td>
                     <td class="p-3">${emp.supervisor || 'N/A'}</td>
                     <td class="p-3 text-center">
@@ -1151,10 +1156,13 @@
                     logDetails = `⚠️ TRẢ HỘ cho [${data.empName} - ${data.opsId}]`;
                 }
 
+                const pdaType = data.pdaType || detectDeviceType(pdaCode);
+
                 await addDoc(collection(db, "logs"), {
                     timestamp: timeStr,
                     createdAt: serverTimestamp(),
                     pdaCode: pdaCode,
+                    pdaType: pdaType,
                     status: "TRẢ",
                     opsId: logOpsId,
                     empName: logEmpName,
