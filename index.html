@@ -18,7 +18,7 @@
     <!-- Firebase SDK v9 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBWhqoCmf75jljLewbh6h-4aQEBPIydgYE",
@@ -33,7 +33,7 @@
         const db = getFirestore(app);
 
         window.db = db;
-        window.fs = { collection, onSnapshot, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch };
+        window.fs = { collection, onSnapshot, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, serverTimestamp };
     </script>
 
     <style>
@@ -92,8 +92,8 @@
                 <span class="text-gray-500">Hệ thống ghi nhận thời gian thực</span>
             </div>
             <div class="text-right text-gray-600">
-                <span id="currentDay" class="font-semibold mr-2">Thứ ba – Ngày 04/08/2026</span>
-                <span id="currentTime" class="font-mono font-bold text-orange-600 text-base">20:05:30</span>
+                <span id="currentDay" class="font-semibold mr-2">Thứ tư – Ngày 05/08/2026</span>
+                <span id="currentTime" class="font-mono font-bold text-orange-600 text-base">13:00:00</span>
             </div>
         </header>
 
@@ -207,7 +207,7 @@
                 </div>
             </div>
 
-            <!-- TAB PIVOT TABLE THEO SUPERVISOR (MỚI) -->
+            <!-- TAB PIVOT TABLE THEO SUPERVISOR -->
             <div id="tab-pivot" class="tab-content hidden space-y-4">
                 <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <div class="flex justify-between items-center mb-4 border-b pb-3">
@@ -222,15 +222,16 @@
                         </div>
                     </div>
 
-                    <div id="pivotContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Nơi đổ dữ liệu Pivot Table -->
-                    </div>
+                    <div id="pivotContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
             </div>
 
-            <!-- TAB 3: LOGS NHẬT KÝ -->
+            <!-- TAB 3: LOGS NHẬT KÝ (ĐÃ CẬP NHẬT SẮP XẾP MỚI ➔ CŨ) -->
             <div id="tab-logs" class="tab-content hidden bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-                <h2 class="text-base font-bold text-gray-800 uppercase mb-4">Logs Nhật Ký Mượn / Trả</h2>
+                <div class="flex justify-between items-center mb-4 border-b pb-3">
+                    <h2 class="text-base font-bold text-gray-800 uppercase">Logs Nhật Ký Mượn / Trả</h2>
+                    <span class="text-xs text-gray-500 font-semibold"><i class="fa-solid fa-arrow-down-wide-short text-orange-500 mr-1"></i> Sắp xếp: Mới nhất ➔ Cũ nhất</span>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-slate-100 text-gray-700 font-bold border-b">
@@ -251,8 +252,6 @@
 
             <!-- TAB 4: QUẢN LÝ NHÂN VIÊN & IMPORT EXCEL -->
             <div id="tab-employees" class="tab-content hidden space-y-5">
-                
-                <!-- Khu vực Import Hàng Loạt từ Excel -->
                 <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 shadow-sm border border-emerald-200 space-y-3">
                     <div class="flex justify-between items-center">
                         <div>
@@ -270,7 +269,6 @@
                     </div>
                 </div>
 
-                <!-- Form Sửa/Thêm Nhân viên -->
                 <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <h2 class="text-base font-bold text-gray-800 uppercase mb-3">Thêm Hoặc Cập Nhật Lẻ 1 Nhân Viên</h2>
                     <form id="empForm" onsubmit="saveEmployee(event)" class="grid grid-cols-6 gap-3">
@@ -302,7 +300,6 @@
                     </form>
                 </div>
 
-                <!-- Bảng danh sách nhân viên + Thanh tìm kiếm + Các nút xóa -->
                 <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
                         <div class="flex items-center gap-3">
@@ -345,7 +342,7 @@
         </div>
     </div>
 
-    <!-- MODAL POPUP: CHI TIẾT CÁC MÁY MÀ NHÂN VIÊN ĐANG MƯỢN -->
+    <!-- MODAL POPUP CHI TIẾT MÁY -->
     <div id="empDetailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-200">
             <div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center">
@@ -357,9 +354,7 @@
             </div>
             <div class="p-5 space-y-3">
                 <p class="text-xs font-bold text-gray-500 uppercase">Danh sách các thiết bị PDA chưa trả:</p>
-                <div id="modalPdaList" class="space-y-2 max-h-60 overflow-y-auto pr-1">
-                    <!-- Danh sách PDA chi tiết sẽ đổ vào đây -->
-                </div>
+                <div id="modalPdaList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
             </div>
             <div class="bg-gray-50 px-5 py-3 border-t text-right">
                 <button onclick="closeModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-xs">
@@ -369,7 +364,7 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC XỬ LÝ -->
+    <!-- JAVASCRIPT LOGIC XỬ LÝ SẮP XẾP THỜI GIAN MỚI NHẤT -->
     <script type="module">
         let selectedEmployee = null;
         let pendingBorrowPdaList = [];
@@ -392,6 +387,26 @@
             document.getElementById('currentTime').innerText = now.toTimeString().split(' ')[0];
         }, 1000);
 
+        // Helper Parse ngày tháng từ chuỗi "HH:mm:ss DD/MM/YYYY" hoặc ISO
+        function parseCustomDate(str, timeSec = 0) {
+            if (!str) return timeSec ? timeSec * 1000 : 0;
+            if (typeof str === 'number') return str;
+            
+            // Nếu có định dạng "HH:mm:ss DD/MM/YYYY" hoặc "DD/MM/YYYY HH:mm:ss"
+            const parts = str.split(' ');
+            if (parts.length === 2) {
+                let datePart = parts[0].includes('/') ? parts[0] : parts[1];
+                let timePart = parts[0].includes(':') ? parts[0] : parts[1];
+                const [d, m, y] = datePart.split('/');
+                const [h, min, s] = timePart.split(':');
+                if (d && m && y) {
+                    return new Date(y, m - 1, d, h || 0, min || 0, s || 0).getTime();
+                }
+            }
+            const t = Date.parse(str);
+            return isNaN(t) ? (timeSec ? timeSec * 1000 : 0) : t;
+        }
+
         window.addEventListener('load', () => {
             const { collection, onSnapshot } = window.fs;
             const db = window.db;
@@ -403,9 +418,23 @@
                 renderPivotTable(unreturnedCache);
             });
 
+            // Lắng nghe Logs và tự động SẮP XẾP MỚI NHẤT ➔ CŨ NHẤT
             onSnapshot(collection(db, "logs"), (snapshot) => {
                 const logs = [];
-                snapshot.forEach(doc => logs.push(doc.data()));
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    let rawTime = 0;
+                    if (data.createdAt && data.createdAt.seconds) {
+                        rawTime = data.createdAt.seconds * 1000;
+                    } else {
+                        rawTime = parseCustomDate(data.timestamp);
+                    }
+                    logs.push({ ...data, _rawTime: rawTime });
+                });
+
+                // SẮP XẾP THỜI GIAN GIẢM DẦN (MỚI XUẤT HIỆN TRÊN CÙNG)
+                logs.sort((a, b) => b._rawTime - a._rawTime);
+
                 renderLogs(logs);
             });
 
@@ -416,7 +445,7 @@
             });
         });
 
-        // 1. AUTO-FILL TỰ ĐỘNG KHI SCAN/NHẬP OPS ID
+        // AUTO-FILL OPS ID
         const scanEmpInput = document.getElementById('scanEmpInput');
         if (scanEmpInput) {
             const checkAndFillEmployee = async () => {
@@ -471,7 +500,7 @@
             });
         }
 
-        // 2. MƯỢN MÁY
+        // MƯỢN MÁY
         const borrowPdaInput = document.getElementById('borrowPdaInput');
         if (borrowPdaInput) {
             borrowPdaInput.addEventListener('keypress', (e) => {
@@ -487,7 +516,7 @@
             });
         }
 
-        // 3. TRẢ MÁY
+        // TRẢ MÁY
         const returnPdaInput = document.getElementById('returnPdaInput');
         if (returnPdaInput) {
             returnPdaInput.addEventListener('keypress', async (e) => {
@@ -568,16 +597,18 @@
             renderPendingList();
         };
 
-        // 4. XỬ LÝ LƯU BATCH MƯỢN / TRẢ
+        // XỬ LÝ LƯU BATCH MƯỢN / TRẢ (CÓ THỜI GIAN SERVER TIMESTAMP)
         window.processBatchTransaction = async function() {
             if (pendingBorrowPdaList.length === 0 && pendingReturnPdaList.length === 0) {
                 alert("⚠️ Hãy quét ít nhất 1 mã PDA để cấp mượn hoặc thu hồi!");
                 return;
             }
 
-            const { collection, addDoc, query, where, getDocs, deleteDoc, doc } = window.fs;
+            const { collection, addDoc, query, where, getDocs, deleteDoc, doc, serverTimestamp } = window.fs;
             const db = window.db;
-            const now = new Date().toLocaleString('vi-VN');
+            
+            const nowObj = new Date();
+            const timeStr = `${nowObj.getHours().toString().padStart(2,'0')}:${nowObj.getMinutes().toString().padStart(2,'0')}:${nowObj.getSeconds().toString().padStart(2,'0')} ${nowObj.getDate().toString().padStart(2,'0')}/${(nowObj.getMonth()+1).toString().padStart(2,'0')}/${nowObj.getFullYear()}`;
             const adminName = "HÀ VIỆT HÙNG";
 
             if (pendingBorrowPdaList.length > 0) {
@@ -603,12 +634,14 @@
                         empName: selectedEmployee.empName,
                         team: selectedEmployee.team || '',
                         supervisor: selectedEmployee.supervisor || '',
-                        borrowTime: now,
+                        borrowTime: timeStr,
+                        createdAt: serverTimestamp(),
                         adminName: adminName
                     });
 
                     await addDoc(collection(db, "logs"), {
-                        timestamp: now,
+                        timestamp: timeStr,
+                        createdAt: serverTimestamp(),
                         pdaCode: borrowPda,
                         status: "MƯỢN",
                         opsId: selectedEmployee.opsId,
@@ -642,7 +675,8 @@
                         }
 
                         await addDoc(collection(db, "logs"), {
-                            timestamp: now,
+                            timestamp: timeStr,
+                            createdAt: serverTimestamp(),
                             pdaCode: returnPda,
                             status: "TRẢ",
                             opsId: logOpsId,
@@ -665,7 +699,7 @@
             scanEmpInput.focus();
         };
 
-        // --- PIVOT TABLE THEO SUPERVISOR ---
+        // PIVOT TABLE THEO SUPERVISOR
         function renderPivotTable(unreturnedList) {
             const container = document.getElementById('pivotContainer');
             document.getElementById('pivotTotalPdas').innerText = unreturnedList.length;
@@ -680,7 +714,6 @@
                 return;
             }
 
-            // Group data theo Supervisor -> Nhân viên
             const pivotData = {};
 
             unreturnedList.forEach(item => {
@@ -750,7 +783,6 @@
             container.innerHTML = html;
         }
 
-        // POPUP CHI TIẾT KHI BẤM VÀO NHÂN VIÊN TRONG PIVOT TABLE
         window.openEmpDetailsModal = function(opsId) {
             const empItems = unreturnedCache.filter(item => item.opsId.toLowerCase() === opsId.toLowerCase());
             if (empItems.length === 0) return;
@@ -780,7 +812,7 @@
             document.getElementById('empDetailsModal').classList.add('hidden');
         };
 
-        // --- RENDER TABLES KHÁC ---
+        // RENDER UNRETURNED TABLE
         function renderUnreturned(list) {
             const fullTbody = document.getElementById('unreturnedFullTable');
             const miniTbody = document.getElementById('unreturnedMiniTable');
@@ -816,10 +848,11 @@
             `).join('');
         }
 
+        // RENDER LOGS TABLE (ĐÃ CÓ THỜI GIAN THEO THỨ TỰ TỪ MỚI NÊN ĐẾN CŨ SỐ NẰM TRÊN ĐẦU)
         function renderLogs(logs) {
             document.getElementById('logsTable').innerHTML = logs.map(log => `
                 <tr class="hover:bg-gray-50">
-                    <td class="p-3 font-mono text-gray-500 text-xs">${log.timestamp}</td>
+                    <td class="p-3 font-mono text-gray-600 font-bold text-xs">${log.timestamp}</td>
                     <td class="p-3 font-mono font-bold text-orange-600">${log.pdaCode}</td>
                     <td class="p-3"><span class="${log.status === 'MƯỢN' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} font-bold px-2 py-1 rounded text-xs">${log.status}</span></td>
                     <td class="p-3 font-mono font-semibold">${log.opsId}</td>
@@ -1050,9 +1083,11 @@
         window.returnPdaDirect = async function(docId, pdaCode) {
             if (!confirm(`Xác nhận thu hồi PDA [${pdaCode}]?`)) return;
 
-            const { collection, addDoc, doc, deleteDoc, getDoc } = window.fs;
+            const { collection, addDoc, doc, deleteDoc, getDoc, serverTimestamp } = window.fs;
             const db = window.db;
-            const now = new Date().toLocaleString('vi-VN');
+            
+            const nowObj = new Date();
+            const timeStr = `${nowObj.getHours().toString().padStart(2,'0')}:${nowObj.getMinutes().toString().padStart(2,'0')}:${nowObj.getSeconds().toString().padStart(2,'0')} ${nowObj.getDate().toString().padStart(2,'0')}/${(nowObj.getMonth()+1).toString().padStart(2,'0')}/${nowObj.getFullYear()}`;
 
             const unreturnedRef = doc(db, "unreturned", docId);
             const docSnap = await getDoc(unreturnedRef);
@@ -1072,7 +1107,8 @@
                 }
 
                 await addDoc(collection(db, "logs"), {
-                    timestamp: now,
+                    timestamp: timeStr,
+                    createdAt: serverTimestamp(),
                     pdaCode: pdaCode,
                     status: "TRẢ",
                     opsId: logOpsId,
