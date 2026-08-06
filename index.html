@@ -41,9 +41,9 @@
     </script>
 
     <style>
-        /* Khóa kích thước font chữ và quy cách phóng to/thu nhỏ ở 100% */
+        /* Khóa kích thước font chữ nâng nhẹ lên 15px */
         html {
-            font-size: 14px !important;
+            font-size: 15px !important;
             -webkit-text-size-adjust: 100% !important;
             -moz-text-size-adjust: 100% !important;
             -ms-text-size-adjust: 100% !important;
@@ -59,7 +59,7 @@
         }
 
         body {
-            font-size: 14px !important;
+            font-size: 15px !important;
             min-width: 1200px; /* Lock base layout structure */
             overflow-x: auto;
             touch-action: manipulation;
@@ -1060,7 +1060,6 @@
             }
         }
 
-        // SỬA LỖI 2: XỬ LÝ QUÉT MÃ NHÂN VIÊN TỰ ĐỘNG - HIỂN THỊ NGAY TRONG 1 LẦN BẤM ENTER
         const scanEmpInput = document.getElementById('scanEmpInput');
         
         async function checkAndFillEmployee() {
@@ -1078,10 +1077,8 @@
                 return false;
             }
 
-            // 1. Tìm đồng bộ từ bộ nhớ Cache trước (Tốc độ cực nhanh không trễ)
             let empData = employeeCache.find(e => e.opsId && e.opsId.toLowerCase() === opsId.toLowerCase());
 
-            // 2. Nếu chưa có trong cache mới truy vấn CSDL Firestore
             if (!empData) {
                 try {
                     const { collection, query, where, getDocs } = window.fs;
@@ -1115,7 +1112,6 @@
                 if (cleanedSup) empSupSelect.value = cleanedSup;
                 return true;
             } else {
-                // Nếu chưa có trong CSDL vẫn cho phép cấp tạm bằng OpsID
                 selectedEmployee = { opsId: opsId, empName: opsId, team: '', supervisor: '' };
                 empBox.innerHTML = `
                     <div class="flex justify-between items-center w-full">
@@ -1131,18 +1127,15 @@
         }
 
         if (scanEmpInput) {
-            // Khi máy quét phát phím Enter (1 LẦN BẤM ENTER LÀ XONG)
             scanEmpInput.addEventListener('keydown', async (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     await checkAndFillEmployee();
-                    // Tự động chuyển tiêu điểm sang ô quét thiết bị để thao tác liên tục
                     const borrowInput = document.getElementById('borrowPdaInput');
                     if (borrowInput) borrowInput.focus();
                 }
             });
 
-            // Khi gõ/quét có độ dài đủ lớn tự động điền ngay không cần chờ
             let empInputTimer = null;
             scanEmpInput.addEventListener('input', () => {
                 clearTimeout(empInputTimer);
@@ -1530,7 +1523,42 @@
             document.getElementById('empDetailsModal').classList.remove('hidden');
         };
 
-        // SỬA LỖI 1: TỰ TẠO Ô CHỨA VĂN BẢN ĐỂ SAO CHÉP MÃ MÁY TOÀN DIỆN TRÊN MỌI TRÌNH DUYỆT / IFRAME
+        window.returnPdaDirect = async function(id, pdaCode) {
+            if (currentUserRole === 'guest') return;
+            const confirmReturn = await showCustomConfirm("Nhận Trả Thiết Bị", `Xác nhận nhận trả thiết bị [${pdaCode}]?`);
+            if (!confirmReturn) return;
+
+            const { doc, deleteDoc, collection, addDoc, serverTimestamp } = window.fs;
+            const db = window.db;
+
+            const item = unreturnedCache.find(i => i.id === id);
+            if (!item) return;
+
+            try {
+                await deleteDoc(doc(db, "unreturned", id));
+
+                const nowObj = new Date();
+                const timeStr = `${nowObj.getHours().toString().padStart(2,'0')}:${nowObj.getMinutes().toString().padStart(2,'0')}:${nowObj.getSeconds().toString().padStart(2,'0')} ${nowObj.getDate().toString().padStart(2,'0')}/${(nowObj.getMonth()+1).toString().padStart(2,'0')}/${nowObj.getFullYear()}`;
+
+                await addDoc(collection(db, "logs"), {
+                    timestamp: timeStr,
+                    createdAt: serverTimestamp(),
+                    pdaCode: pdaCode,
+                    pdaType: detectDeviceType(pdaCode),
+                    status: "TRẢ",
+                    opsId: item.opsId,
+                    empName: item.empName,
+                    details: "Trả trực tiếp tại danh sách",
+                    adminName: currentAdminDisplayName
+                });
+
+                showToast(`Đã nhận trả thiết bị [${pdaCode}] thành công!`);
+            } catch (err) {
+                console.error(err);
+                showToast("Có lỗi xảy ra khi nhận trả!", 'error');
+            }
+        };
+
         function copyTextToClipboard(text) {
             const textArea = document.createElement("textarea");
             textArea.value = text;
@@ -1886,88 +1914,45 @@
                 await batch.commit();
             }
 
-            if (count > 0) {
-                showToast(`Đã tải thành công ${count} nhân viên vào CSDL!`);
-            }
+            showToast(`Đã nhập thành công ${count} nhân viên từ file!`);
         }
 
-        document.getElementById('excelFileInput').addEventListener('change', function(e) {
-            if (currentUserRole === 'guest') return;
-            const file = e.target.files[0];
-            if (!file) return;
+        const excelFileInput = document.getElementById('excelFileInput');
+        if (excelFileInput) {
+            excelFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                const reader = new FileReader();
+                reader.onload = async (evt) => {
+                    try {
+                        const data = new Uint8Array(evt.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-                const formattedData = jsonData.map(row => ({
-                    opsId: row['Ops ID'] || row['Mã NV'] || row['opsId'],
-                    empName: row['Họ tên'] || row['Họ Tên'] || row['empName'],
-                    email: row['Email'] || row['email'],
-                    team: row['Team'] || row['team'],
-                    supervisor: row['Supervisor'] || row['supervisor']
-                }));
+                        const formattedData = jsonData.map(row => ({
+                            opsId: row['Mã NV'] || row['Ops ID'] || row['OpsId'] || row['OPS ID'] || row['Mã nhân viên'] || row['opsId'] || '',
+                            empName: row['Họ tên'] || row['Họ Tên'] || row['Tên'] || row['Name'] || row['empName'] || '',
+                            email: row['Email'] || row['email'] || '',
+                            team: row['Team'] || row['Bộ phận'] || row['team'] || '',
+                            supervisor: row['Supervisor'] || row['Sup'] || row['Quản lý'] || row['supervisor'] || ''
+                        })).filter(item => item.opsId && item.empName);
 
-                await saveBatchEmployees(formattedData);
-            };
-            reader.readAsArrayBuffer(file);
-        });
+                        if (formattedData.length === 0) {
+                            showToast("File Excel không chứa đúng định dạng cột (Mã NV, Họ tên, Team, Supervisor)!", "warning");
+                            return;
+                        }
 
-        window.returnPdaDirect = async function(docId, pdaCode) {
-            if (currentUserRole === 'guest') return;
-
-            const { collection, addDoc, doc, deleteDoc, getDoc, serverTimestamp } = window.fs;
-            const db = window.db;
-            
-            const nowObj = new Date();
-            const timeStr = `${nowObj.getHours().toString().padStart(2,'0')}:${nowObj.getMinutes().toString().padStart(2,'0')}:${nowObj.getSeconds().toString().padStart(2,'0')} ${nowObj.getDate().toString().padStart(2,'0')}/${(nowObj.getMonth()+1).toString().padStart(2,'0')}/${nowObj.getFullYear()}`;
-
-            const unreturnedRef = doc(db, "unreturned", docId);
-            const docSnap = await getDoc(unreturnedRef);
-
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                await deleteDoc(unreturnedRef);
-
-                let logOpsId = data.opsId;
-                let logEmpName = data.empName;
-                let logDetails = "Nhận trả tại thao tác nhanh";
-
-                if (selectedEmployee && selectedEmployee.opsId.toLowerCase() !== data.opsId.toLowerCase()) {
-                    logOpsId = selectedEmployee.opsId;
-                    logEmpName = selectedEmployee.empName;
-                    logDetails = `⚠️ TRẢ HỘ cho [${data.empName} - ${data.opsId}]`;
-                }
-
-                const pdaType = detectDeviceType(pdaCode);
-
-                await addDoc(collection(db, "logs"), {
-                    timestamp: timeStr,
-                    createdAt: serverTimestamp(),
-                    pdaCode: pdaCode,
-                    pdaType: pdaType,
-                    status: "TRẢ",
-                    opsId: logOpsId,
-                    empName: logEmpName,
-                    details: logDetails,
-                    adminName: currentAdminDisplayName
-                });
-
-                closeModal();
-                showToast(`⚡ Đã thu hồi thiết bị ${pdaCode} thành công!`);
-            }
-        };
-
-        const searchUnreturned = document.getElementById('searchUnreturned');
-        if (searchUnreturned) {
-            searchUnreturned.addEventListener('keyup', function() {
-                const keyword = this.value.toLowerCase();
-                document.querySelectorAll('#unreturnedFullTable tr').forEach(row => {
-                    row.style.display = row.innerText.toLowerCase().includes(keyword) ? '' : 'none';
-                });
+                        await saveBatchEmployees(formattedData);
+                        excelFileInput.value = '';
+                    } catch (err) {
+                        console.error("Lỗi đọc file Excel:", err);
+                        showToast("Đọc file Excel thất bại!", "error");
+                    }
+                };
+                reader.readAsArrayBuffer(file);
             });
         }
     </script>
