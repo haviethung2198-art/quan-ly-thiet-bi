@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>HỆ THỐNG QUẢN LÝ CẤP PHÁT THIẾT BỊ</title>
     <!-- Font Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,12 +41,34 @@
     </script>
 
     <style>
+        /* Khóa kích thước font chữ và quy cách phóng to/thu nhỏ ở 100% */
+        html {
+            font-size: 14px !important;
+            -webkit-text-size-adjust: 100% !important;
+            -moz-text-size-adjust: 100% !important;
+            -ms-text-size-adjust: 100% !important;
+            text-size-adjust: 100% !important;
+            zoom: 1 !important;
+            height: 100%;
+        }
+
         body, input, button, select, textarea, table, th, td, h1, h2, h3, h4, p, span, div {
             font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
+
+        body {
+            font-size: 14px !important;
+            min-width: 1200px; /* Lock base layout structure */
+            overflow-x: auto;
+            touch-action: manipulation;
+        }
+
         .fa, .fas, .far, .fal, .fad, .fab, .fa-solid, .fa-regular, .fa-brands {
             font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
         }
+
         .radar-box { position: relative; width: 70px; height: 70px; border-radius: 50%; background: rgba(255,247,237,0.8); display: flex; align-items: center; justify-content: center; }
         .radar-circle { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid rgba(249,115,22,0.4); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(1.4); opacity: 0; } }
@@ -58,7 +80,7 @@
         .toast-animate { animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
-<body class="bg-[#f4f6f8] text-gray-800 text-sm flex h-screen overflow-hidden">
+<body class="bg-[#f4f6f8] text-gray-800 text-sm flex h-screen overflow-hidden select-none">
 
     <!-- CONTAINER THÔNG BÁO TOAST GÓC BÊN PHẢI MÀN HÌNH -->
     <div id="toastContainer" class="fixed top-4 right-4 z-[200] flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
@@ -242,7 +264,7 @@
                         </div>
 
                         <div class="flex gap-2">
-                            <input type="text" id="scanEmpInput" autofocus placeholder="Quét mã NV (Dùng khi Mượn hoặc Trả hộ)..." class="flex-1 p-3 border-2 border-orange-400 rounded-xl focus:border-orange-600 outline-none font-bold text-gray-800 text-sm shadow-sm">
+                            <input type="text" id="scanEmpInput" autofocus placeholder="Quét mã NV (Chỉ cần quét 1 lần)..." class="flex-1 p-3 border-2 border-orange-400 rounded-xl focus:border-orange-600 outline-none font-bold text-gray-800 text-sm shadow-sm">
                         </div>
 
                         <div id="selectedEmpBox" class="border-2 border-dashed border-orange-200 rounded-xl p-4 bg-orange-50/40 flex-1 flex items-center justify-center min-h-[110px]">
@@ -545,7 +567,7 @@
             <div class="p-5 space-y-3">
                 <div class="flex justify-between items-center">
                     <p class="text-xs font-bold text-gray-500 uppercase">Danh sách thiết bị PDA đang giữ:</p>
-                    <button id="btnCopyAllPda" onclick="copyAllPdaCodes()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 shadow-sm">
+                    <button id="btnCopyAllPda" onclick="copyAllPdaCodes()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
                         <i class="fa-solid fa-copy"></i> Sao chép tất cả mã PDA
                     </button>
                 </div>
@@ -1038,72 +1060,97 @@
             }
         }
 
+        // SỬA LỖI 2: XỬ LÝ QUÉT MÃ NHÂN VIÊN TỰ ĐỘNG - HIỂN THỊ NGAY TRONG 1 LẦN BẤM ENTER
         const scanEmpInput = document.getElementById('scanEmpInput');
-        if (scanEmpInput) {
-            const checkAndFillEmployee = async () => {
-                const opsId = scanEmpInput.value.trim();
-                const empTeamSelect = document.getElementById('displayEmpTeam');
-                const empSupSelect = document.getElementById('displayEmpSup');
+        
+        async function checkAndFillEmployee() {
+            if (!scanEmpInput) return false;
+            const opsId = scanEmpInput.value.trim();
+            const empTeamSelect = document.getElementById('displayEmpTeam');
+            const empSupSelect = document.getElementById('displayEmpSup');
+            const empBox = document.getElementById('selectedEmpBox');
 
-                if (!opsId) {
-                    empTeamSelect.value = '';
-                    empSupSelect.value = '';
-                    return;
-                }
+            if (!opsId) {
+                selectedEmployee = null;
+                empBox.innerHTML = `<p class="text-gray-400 font-semibold text-xs">Chưa quét thông tin nhân viên</p>`;
+                empTeamSelect.value = '';
+                empSupSelect.value = '';
+                return false;
+            }
 
-                let empData = employeeCache.find(e => e.opsId.toLowerCase() === opsId.toLowerCase());
+            // 1. Tìm đồng bộ từ bộ nhớ Cache trước (Tốc độ cực nhanh không trễ)
+            let empData = employeeCache.find(e => e.opsId && e.opsId.toLowerCase() === opsId.toLowerCase());
 
-                if (!empData) {
+            // 2. Nếu chưa có trong cache mới truy vấn CSDL Firestore
+            if (!empData) {
+                try {
                     const { collection, query, where, getDocs } = window.fs;
                     const db = window.db;
                     const q = query(collection(db, "employees"), where("opsId", "==", opsId));
                     const snap = await getDocs(q);
-                    if (!snap.empty) empData = snap.docs[0].data();
+                    if (!snap.empty) {
+                        empData = snap.docs[0].data();
+                    }
+                } catch (e) {
+                    console.error("Lỗi tìm kiếm NV:", e);
                 }
+            }
 
-                const empBox = document.getElementById('selectedEmpBox');
-
-                if (empData) {
-                    selectedEmployee = { ...empData };
-                    empBox.innerHTML = `
-                        <div class="flex justify-between items-center w-full">
-                            <div>
-                                <p class="font-extrabold text-gray-800 text-sm">${empData.empName}</p>
-                                <p class="text-gray-500 font-bold text-xs mt-0.5">Mã NV: <span class="text-orange-600 font-extrabold">${empData.opsId}</span></p>
-                            </div>
-                            <span class="bg-emerald-100 text-emerald-700 font-extrabold px-3 py-1 rounded-lg text-xs">✓ Đã chọn NV</span>
+            if (empData) {
+                selectedEmployee = { ...empData };
+                empBox.innerHTML = `
+                    <div class="flex justify-between items-center w-full">
+                        <div>
+                            <p class="font-extrabold text-gray-800 text-sm">${empData.empName}</p>
+                            <p class="text-gray-500 font-bold text-xs mt-0.5">Mã NV: <span class="text-orange-600 font-extrabold">${empData.opsId}</span></p>
                         </div>
-                    `;
+                        <span class="bg-emerald-100 text-emerald-700 font-extrabold px-3 py-1 rounded-lg text-xs">✓ Đã chọn NV</span>
+                    </div>
+                `;
 
-                    const cleanedTeam = cleanOptionString(empData.team);
-                    const cleanedSup = cleanOptionString(empData.supervisor);
+                const cleanedTeam = cleanOptionString(empData.team);
+                const cleanedSup = cleanOptionString(empData.supervisor);
 
-                    if (cleanedTeam) empTeamSelect.value = cleanedTeam;
-                    if (cleanedSup) empSupSelect.value = cleanedSup;
-
-                } else {
-                    selectedEmployee = null;
-                    empBox.innerHTML = `
-                        <div class="text-red-500 font-extrabold text-xs">
-                            ⚠️ Không tìm thấy Ops ID "${opsId}". Vui lòng kiểm tra lại!
+                if (cleanedTeam) empTeamSelect.value = cleanedTeam;
+                if (cleanedSup) empSupSelect.value = cleanedSup;
+                return true;
+            } else {
+                // Nếu chưa có trong CSDL vẫn cho phép cấp tạm bằng OpsID
+                selectedEmployee = { opsId: opsId, empName: opsId, team: '', supervisor: '' };
+                empBox.innerHTML = `
+                    <div class="flex justify-between items-center w-full">
+                        <div>
+                            <p class="font-extrabold text-amber-800 text-sm">NV Mới / Vãng Lai: ${opsId}</p>
+                            <p class="text-xs text-amber-600 font-bold mt-0.5">⚠️ Chưa có trong danh sách CSDL (Vẫn có thể cấp/trả)</p>
                         </div>
-                    `;
-                    empTeamSelect.value = '';
-                    empSupSelect.value = '';
-                }
-            };
+                        <span class="bg-amber-100 text-amber-800 font-extrabold px-2.5 py-1 rounded-lg text-xs">Mã Tạm</span>
+                    </div>
+                `;
+                return true;
+            }
+        }
 
-            scanEmpInput.addEventListener('keypress', (e) => {
+        if (scanEmpInput) {
+            // Khi máy quét phát phím Enter (1 LẦN BẤM ENTER LÀ XONG)
+            scanEmpInput.addEventListener('keydown', async (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    checkAndFillEmployee();
+                    await checkAndFillEmployee();
+                    // Tự động chuyển tiêu điểm sang ô quét thiết bị để thao tác liên tục
+                    const borrowInput = document.getElementById('borrowPdaInput');
+                    if (borrowInput) borrowInput.focus();
                 }
             });
 
+            // Khi gõ/quét có độ dài đủ lớn tự động điền ngay không cần chờ
+            let empInputTimer = null;
             scanEmpInput.addEventListener('input', () => {
-                if (scanEmpInput.value.trim().length >= 6) {
-                    checkAndFillEmployee();
-                }
+                clearTimeout(empInputTimer);
+                empInputTimer = setTimeout(() => {
+                    if (scanEmpInput.value.trim().length >= 4) {
+                        checkAndFillEmployee();
+                    }
+                }, 150);
             });
         }
 
@@ -1465,7 +1512,10 @@
                     <div class="bg-orange-50/50 border border-orange-200 rounded-xl p-3 flex justify-between items-center hover:bg-orange-100/50 transition-all">
                         <div>
                             <div class="flex items-center gap-2">
-                                <span class="font-extrabold text-orange-600 text-sm">${item.pdaCode}</span>
+                                <span class="font-extrabold text-orange-600 text-sm select-all">${item.pdaCode}</span>
+                                <button onclick="copySinglePdaCode('${item.pdaCode}')" title="Sao chép mã này" class="text-gray-400 hover:text-orange-600 text-xs p-1">
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
                                 ${renderDeviceBadge(devType)}
                             </div>
                             <p class="text-xs text-gray-500 mt-1"><i class="fa-regular fa-clock mr-1"></i>Mượn lúc: <span class="font-semibold text-gray-700">${item.borrowTime}</span> | Người cấp: <span class="font-semibold text-slate-700">${item.adminName}</span></p>
@@ -1480,16 +1530,50 @@
             document.getElementById('empDetailsModal').classList.remove('hidden');
         };
 
-        window.copyAllPdaCodes = function() {
-            if (currentModalPdaCodes.length === 0) return;
+        // SỬA LỖI 1: TỰ TẠO Ô CHỨA VĂN BẢN ĐỂ SAO CHÉP MÃ MÁY TOÀN DIỆN TRÊN MỌI TRÌNH DUYỆT / IFRAME
+        function copyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
 
+            let successful = false;
+            try {
+                successful = document.execCommand('copy');
+            } catch (err) {
+                console.error('ExecCommand Copy Error:', err);
+            }
+
+            document.body.removeChild(textArea);
+
+            if (!successful && navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast("Đã sao chép thành công!");
+                }).catch(() => {
+                    showToast("Không thể sao chép văn bản!", "error");
+                });
+            } else if (successful) {
+                showToast("Đã sao chép thành công!");
+            } else {
+                showToast("Trình duyệt chặn sao chép!", "error");
+            }
+        }
+
+        window.copyAllPdaCodes = function() {
+            if (currentModalPdaCodes.length === 0) {
+                showToast("Không có mã PDA nào để sao chép!", "warning");
+                return;
+            }
             const textToCopy = currentModalPdaCodes.join(', ');
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                showToast("Đã sao chép tất cả mã PDA vào clipboard!");
-            }).catch(err => {
-                console.error("Không thể copy:", err);
-                showToast("Lỗi khi sao chép danh sách mã!", 'error');
-            });
+            copyTextToClipboard(textToCopy);
+        };
+
+        window.copySinglePdaCode = function(code) {
+            copyTextToClipboard(code);
         };
 
         window.closeModal = function() {
@@ -1506,7 +1590,12 @@
                 const devType = detectDeviceType(item.pdaCode);
                 return `
                     <tr class="hover:bg-orange-50/40 border-b border-gray-100">
-                        <td class="p-2.5 font-bold text-orange-600">${item.pdaCode}</td>
+                        <td class="p-2.5 font-bold text-orange-600 flex items-center gap-1.5">
+                            <span class="select-all">${item.pdaCode}</span>
+                            <button onclick="copySinglePdaCode('${item.pdaCode}')" title="Sao chép mã" class="text-gray-400 hover:text-orange-600 text-xs">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </td>
                         <td class="p-2.5">${renderDeviceBadge(devType)}</td>
                         <td class="p-2.5 font-semibold">${item.opsId}</td>
                         <td class="p-2.5 font-bold">${item.empName}</td>
@@ -1527,7 +1616,12 @@
                 const devType = detectDeviceType(item.pdaCode);
                 return `
                     <tr class="hover:bg-gray-50/80 border-b border-gray-100 transition-all">
-                        <td class="p-3 font-extrabold text-orange-600 text-xs">${item.pdaCode}</td>
+                        <td class="p-3 font-extrabold text-orange-600 text-xs flex items-center gap-1.5">
+                            <span class="select-all">${item.pdaCode}</span>
+                            <button onclick="copySinglePdaCode('${item.pdaCode}')" title="Sao chép" class="text-gray-400 hover:text-orange-600 text-xs">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </td>
                         <td class="p-3">${renderDeviceBadge(devType)}</td>
                         <td class="p-3 font-bold text-gray-800 text-xs">${item.empName} <span class="text-gray-500 font-semibold text-xs">(${item.opsId})</span></td>
                         <td class="p-3 text-gray-700 font-bold text-xs">${item.team} - ${item.supervisor}</td>
@@ -1546,7 +1640,12 @@
                 return `
                     <tr class="hover:bg-gray-50 border-b border-gray-100">
                         <td class="p-2.5 text-gray-600 font-bold text-xs">${log.timestamp}</td>
-                        <td class="p-2.5 font-bold text-orange-600">${log.pdaCode}</td>
+                        <td class="p-2.5 font-bold text-orange-600 flex items-center gap-1">
+                            <span>${log.pdaCode}</span>
+                            <button onclick="copySinglePdaCode('${log.pdaCode}')" title="Sao chép" class="text-gray-400 hover:text-orange-600 text-xs">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </td>
                         <td class="p-2.5">${renderDeviceBadge(devType)}</td>
                         <td class="p-2.5"><span class="${log.status === 'MƯỢN' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} font-bold px-2 py-0.5 rounded text-xs">${log.status}</span></td>
                         <td class="p-2.5 font-semibold">${log.opsId}</td>
